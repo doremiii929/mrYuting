@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>九九乘法大挑戰</title>
+    <style>
+        @font-face {
+            font-family: 'DFKai-SB';
+            src: local('DFKai-SB'), local('BiauKai'), local('標楷體');
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'DFKai-SB', '標楷體', serif;
+            background: linear-gradient(135deg, #e1f5fe 0%, #fce4ec 50%, #bbdefb 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #game-container {
+            width: 95%;
+            max-width: 750px;
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 40px;
+            padding: 40px 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            border: 8px solid #64b5f6;
+        }
+
+        /* ---------------- 注音排版修正 (聲符在右) ---------------- */
+        .word-wrap {
+            display: inline-flex;
+            align-items: center;
+            margin: 0 3px;
+            vertical-align: middle;
+            line-height: 1;
+        }
+        .char { font-size: 1.1em; font-weight: bold; color: #333; }
+        .bopomofo {
+            position: relative;
+            display: inline-flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.45em;
+            line-height: 1.1;
+            margin-left: 2px;
+            padding-right: 10px;
+            color: #1a237e;
+        }
+        .tone-right {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1em;
+            font-weight: bold;
+        }
+
+        /* ---------------- 介面切換 ---------------- */
+        #login-screen, #game-screen, #result-screen { display: none; }
+        .active { display: block !important; }
+
+        input[type="text"] {
+            width: 70%;
+            padding: 15px;
+            font-size: 28px;
+            border: 4px solid #f06292;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 25px;
+            font-family: 'DFKai-SB', '標楷體';
+        }
+
+        .btn-main {
+            background-color: #f06292;
+            color: white;
+            padding: 18px 45px;
+            font-size: 32px;
+            border: none;
+            border-radius: 30px;
+            box-shadow: 0 6px 0 #ad1457;
+            cursor: pointer;
+            font-family: 'DFKai-SB', '標楷體';
+            transition: all 0.2s;
+        }
+        .btn-main:active { transform: translateY(3px); box-shadow: 0 2px 0 #ad1457; }
+
+        /* ---------------- 統計列 ---------------- */
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 15px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            font-size: 26px;
+            border: 2px solid #f8bbd0;
+        }
+        .num-red { color: #d32f2f; font-weight: bold; font-size: 32px; }
+
+        /* ---------------- 題目顯示 ---------------- */
+        #question-display {
+            font-size: 110px;
+            margin: 40px 0;
+            color: #1a237e;
+            font-weight: bold;
+        }
+
+        /* ---------------- 選項按鈕 ---------------- */
+        .options-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+        .option-btn {
+            flex: 1;
+            padding: 30px 0;
+            font-size: 60px;
+            background-color: #42a5f5;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            box-shadow: 0 8px 0 #1e88e5;
+            cursor: pointer;
+            font-family: 'DFKai-SB', '標楷體';
+        }
+        .btn-correct { background-color: #66bb6a !important; box-shadow: 0 8px 0 #2e7d32 !important; }
+        .btn-wrong { 
+            background-color: #ef5350 !important; 
+            box-shadow: 0 8px 0 #c62828 !important; 
+            animation: shake 0.3s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-12px); }
+            75% { transform: translateX(12px); }
+        }
+
+        /* ---------------- 結算畫面修正 ---------------- */
+        #end-title-large {
+            font-size: 65px; /* 加大標題 */
+            color: #0d47a1;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+        .result-box {
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            border: 4px solid #f8bbd0;
+            margin: 20px 0;
+            display: inline-block;
+            text-align: left;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .score-line {
+            font-size: 36px; /* 加大內容字體 */
+            color: #000;
+            line-height: 2.2;
+            display: flex;
+            align-items: center;
+        }
+        .score-num { 
+            color: #d32f2f; 
+            font-weight: bold; 
+            margin: 0 10px;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    
+    <div id="login-screen" class="active">
+        <div id="login-title"></div>
+        <br><br>
+        <input type="text" id="player-name" placeholder="輸入姓名" maxlength="8">
+        <br>
+        <button class="btn-main" onclick="startGame()" id="btn-go"></button>
+    </div>
+
+    <div id="game-screen">
+        <div class="stats-bar">
+            <div id="stat-timer"></div>
+            <div id="stat-correct"></div>
+            <div id="stat-wrong"></div>
+        </div>
+        <div id="question-display"></div>
+        <div class="options-container">
+            <button class="option-btn" onclick="checkAnswer(0)"></button>
+            <button class="option-btn" onclick="checkAnswer(1)"></button>
+            <button class="option-btn" onclick="checkAnswer(2)"></button>
+        </div>
+    </div>
+
+    <div id="result-screen">
+        <div id="end-title-large"></div>
+        <div class="result-box">
+            <div class="score-line" id="final-name"></div>
+            <div class="score-line" id="line-1"></div>
+            <div class="score-line" id="line-2"></div>
+            <div class="score-line" id="line-3"></div>
+        </div>
+        <br><br>
+        <button class="btn-main" onclick="location.reload()" id="btn-restart"></button>
+    </div>
+</div>
+
+<script>
+    function parseBpmf(text) {
+        return text.replace(/([^\u0000-\u007F]+)(?:\[([^\]]+)\])/g, (match, char, bpmf) => {
+            let tone = '';
+            let mainSymbols = bpmf;
+            if (['ˊ','ˇ','ˋ'].some(t => bpmf.includes(t))) {
+                tone = bpmf.slice(-1);
+                mainSymbols = bpmf.slice(0, -1);
+            }
+            let symHtml = mainSymbols.split('').join('<br>');
+            let toneHtml = tone ? `<span class="tone-right">${tone}</span>` : '';
+            return `<span class="word-wrap"><span class="char">${char}</span><span class="bopomofo">${symHtml}${toneHtml}</span></span>`;
+        });
+    }
+
+    let timeLeft = 60, correctTotal = 0, wrongTotal = 0, currentAnswer = 0, hasErroredThisTurn = false, timerId, pName = "";
+
+    function init() {
+        document.getElementById('login-title').innerHTML = parseBpmf("九[ㄐㄧㄡˇ]九[ㄐㄧㄡˇ]乘[ㄔㄥˊ]法[ㄈㄚˇ]大[ㄉㄚˋ]挑[ㄊㄧㄠˇ]戰[ㄓㄢˋ]");
+        document.getElementById('btn-go').innerHTML = parseBpmf("開[ㄎㄞ]始[ㄕˇ]遊[ㄧㄡˊ]玩[ㄨㄢˊ]");
+        document.getElementById('stat-timer').innerHTML = parseBpmf("時[ㄕˊ]間[ㄐㄧㄢ]：") + '<span id="timer" class="num-red">60</span>';
+        document.getElementById('stat-correct').innerHTML = parseBpmf("答[ㄉㄚˊ]對[ㄉㄨㄟˋ]：") + '<span id="correct-count" class="num-red">0</span>';
+        document.getElementById('stat-wrong').innerHTML = parseBpmf("答[ㄉㄚˊ]錯[ㄘㄨㄛˋ]：") + '<span id="wrong-count" class="num-red">0</span>';
+    }
+
+    function startGame() {
+        pName = document.getElementById('player-name').value.trim() || "小朋友";
+        document.getElementById('login-screen').classList.remove('active');
+        document.getElementById('game-screen').classList.add('active');
+        nextQuestion();
+        timerId = setInterval(() => {
+            timeLeft--;
+            document.getElementById('timer').innerText = timeLeft;
+            if (timeLeft <= 0) endGame();
+        }, 1000);
+    }
+
+    function nextQuestion() {
+        hasErroredThisTurn = false;
+        const n1 = Math.floor(Math.random() * 8) + 2;
+        const n2 = Math.floor(Math.random() * 8) + 2;
+        currentAnswer = n1 * n2;
+        document.getElementById('question-display').innerText = `${n1} × ${n2}`;
+        let opts = [currentAnswer];
+        while(opts.length < 3) {
+            let w = (Math.floor(Math.random() * 8) + 2) * (Math.floor(Math.random() * 8) + 2);
+            if(!opts.includes(w)) opts.push(w);
+        }
+        opts.sort(() => Math.random() - 0.5);
+        document.querySelectorAll('.option-btn').forEach((b, i) => {
+            b.innerText = opts[i];
+            b.className = 'option-btn';
+            b.disabled = false;
+        });
+    }
+
+    function checkAnswer(idx) {
+        const btns = document.querySelectorAll('.option-btn');
+        const val = parseInt(btns[idx].innerText);
+        if(val === currentAnswer) {
+            if(!hasErroredThisTurn) {
+                correctTotal++;
+                document.getElementById('correct-count').innerText = correctTotal;
+            }
+            btns[idx].classList.add('btn-correct');
+            setTimeout(nextQuestion, 250);
+        } else {
+            wrongTotal++;
+            hasErroredThisTurn = true;
+            document.getElementById('wrong-count').innerText = wrongTotal;
+            btns[idx].classList.add('btn-wrong');
+            setTimeout(() => btns[idx].classList.remove('btn-wrong'), 800);
+        }
+    }
+
+    function endGame() {
+        clearInterval(timerId);
+        document.getElementById('game-screen').classList.remove('active');
+        document.getElementById('result-screen').classList.add('active');
+        let rate = (correctTotal + wrongTotal > 0) ? Math.round((correctTotal / (correctTotal + wrongTotal)) * 100) : 0;
+        
+        document.getElementById('end-title-large').innerHTML = parseBpmf("挑[ㄊㄧㄠˇ]戰[ㄓㄢˋ]結[ㄐㄧㄝˊ]束[ㄕㄨˋ]");
+        document.getElementById('final-name').innerHTML = `<span style="color:#ad1457">${pName}</span>` + parseBpmf("同[ㄊㄨㄥˊ]學[ㄒㄩㄝˊ]：");
+        document.getElementById('line-1').innerHTML = parseBpmf("答[ㄉㄚˊ]對[ㄉㄨㄟˋ]題[ㄊㄧˊ]數[ㄕㄨˋ]：") + `<span class="score-num">${correctTotal}</span>` + parseBpmf("題[ㄊㄧˊ]");
+        document.getElementById('line-2').innerHTML = parseBpmf("答[ㄉㄚˊ]錯[ㄘㄨㄛˋ]次[ㄘˋ]數[ㄕㄨˋ]：") + `<span class="score-num">${wrongTotal}</span>` + parseBpmf("次[ㄘˋ]");
+        document.getElementById('line-3').innerHTML = parseBpmf("準[ㄓㄨㄣˇ]確[ㄑㄩㄝˋ]率[ㄌㄩˋ]：") + `<span class="score-num">${rate}</span> %`;
+        document.getElementById('btn-restart').innerHTML = parseBpmf("再[ㄗㄞˋ]玩[ㄨㄢˊ]一[ㄧ]次[ㄘˋ]");
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>
