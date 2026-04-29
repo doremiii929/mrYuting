@@ -3,88 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🌟玉珽老師的語文遊戲室 🌟</title>
+    <title>🌟 玉珽老師的語文遊戲室 🌟</title>
     <style>
         @font-face {
             font-family: 'DFKai-SB';
             src: local('DFKai-SB'), local('BiauKai'), local('標楷體');
         }
+        
         body {
             margin: 0;
-            /* 這裡會抓取老師上傳的 bg.jpg */
             background: url('bg.jpg') no-repeat center center fixed;
             background-size: cover;
             font-family: 'DFKai-SB', '標楷體', serif;
             display: flex;
             flex-direction: column;
-            align-items: center;
             min-height: 100vh;
         }
+
         header {
             background: rgba(136, 171, 117, 0.9);
             color: white;
             width: 100%;
-            padding: 20px 0;
+            padding: 30px 0;
             text-align: center;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
-        .container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 30px;
-            padding: 50px 20px;
-            max-width: 1000px;
+
+        /* 遊戲區域大容器 */
+        .main-content {
+            flex: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            width: 100%;
         }
+
+        /* 分類區塊設定 */
+        .category-section {
+            display: flex;
+            margin-bottom: 50px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.6);
+        }
+
+        /* 左側標題欄 */
+        .category-label {
+            writing-mode: vertical-lr; /* 文字直打 */
+            padding: 20px 15px;
+            font-size: 28px;
+            font-weight: bold;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            letter-spacing: 5px;
+            min-width: 60px;
+        }
+
+        /* 不同科目的顏色 */
+        .bg-chinese { background-color: #e67e22; } /* 橘色代表國語 */
+        .bg-math { background-color: #3498db; }    /* 藍色代表數學 */
+
+        /* 右側遊戲卡片容器 */
+        .game-grid {
+            display: grid;
+            /* 一排 4 個，間距 20px */
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            flex: 1;
+        }
+
+        /* 卡片樣式 */
         .game-card {
             background: rgba(255, 255, 255, 0.9);
-            border-radius: 20px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-            width: 250px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             text-align: center;
-            padding: 25px;
+            padding: 20px;
             transition: all 0.3s;
             cursor: pointer;
-            border: 4px solid #fff;
+            border: 3px solid #fff;
             text-decoration: none;
             color: #333;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 180px;
         }
+
         .game-card:hover {
-            transform: translateY(-10px);
+            transform: translateY(-8px);
             border-color: #88ab75;
             background: white;
         }
-        .game-icon { font-size: 50px; margin-bottom: 10px; }
-        .game-title { font-size: 23px; font-weight: bold; margin-bottom: 5px; }
-        .game-desc { font-size: 16px; color: #555; }
+
+        .game-icon { font-size: 40px; margin-bottom: 10px; }
+        .game-title { font-size: 20px; font-weight: bold; margin-bottom: 5px; }
+        .game-desc { font-size: 14px; color: #666; line-height: 1.4; }
+
+        /* 網底版權宣告 */
+        footer {
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            text-align: center;
+            padding: 15px 0;
+            font-size: 16px;
+            width: 100%;
+        }
+
+        /* 手機版適應 */
+        @media (max-width: 768px) {
+            .category-section { flex-direction: column; }
+            .category-label { writing-mode: horizontal-tb; min-width: auto; padding: 10px; }
+            .game-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+        }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>🌟 玉珽老師的語文遊戲室 🌟</h1>
-    <p>選一個想練習的遊戲吧！</p>
+    <h1>🌟 玉珽老師的遊戲教室 🌟</h1>
+    <p>挑選一個科目，開始挑戰吧！</p>
 </header>
 
-<div class="container">
-    <a href="game-de/" class="game-card">
-        <div class="game-icon">🍎</div>
-        <div class="game-title">「的」大哥與「得」小弟</div>
-        <div class="game-desc">句子判斷</div>
-    </a>
+<div class="main-content">
+    
+    <div class="category-section">
+        <div class="category-label bg-chinese">國語領域</div>
+        <div class="game-grid">
+            <a href="game-de/" class="game-card">
+                <div class="game-icon">🍎</div>
+                <div class="game-title">「的」與「得」</div>
+                <div class="game-desc">分辨用法練習</div>
+            </a>
+            <a href="game-zai/" class="game-card">
+                <div class="game-icon">🍄</div>
+                <div class="game-title">「在」與「再」</div>
+                <div class="game-desc">基礎語法訓練</div>
+            </a>
+            <a href="https://es-d-8393543720260422-019da988-f81b-75e2-af8d-7bd68f11fe2b.codepen.dev/" target="_blank" class="game-card">
+                <div class="game-icon">🪵</div>
+                <div class="game-title">量詞對戰</div>
+                <div class="game-desc">外部 Codepen 連結</div>
+            </a>
+            </div>
+    </div>
 
-    <a href="game-zai/" class="game-card">
-        <div class="game-icon">🍄</div>
-        <div class="game-title">「在」大姐與「再」小妹</div>
-        <div class="game-desc">句子判斷</div>
-    </a>
+    <div class="category-section">
+        <div class="category-label bg-math">數學領域</div>
+        <div class="game-grid">
+            <a href="#" class="game-card">
+                <div class="game-icon">➕</div>
+                <div class="game-title">九九乘法</div>
+                <div class="game-desc">快速心算挑戰 (範例)</div>
+            </a>
+            <a href="#" class="game-card">
+                <div class="game-icon">📏</div>
+                <div class="game-title">長度度量</div>
+                <div class="game-desc">測量小學堂 (範例)</div>
+            </a>
+            </div>
+    </div>
 
-    <a href="https://es-d-8393543720260422-019da988-f81b-75e2-af8d-7bd68f11fe2b.codepen.dev/" target="_blank" class="game-card">
-        <div class="game-icon">🪵</div>
-        <div class="game-title">量詞對戰</div>
-        <div class="game-desc">made by threads:rose_scott老師</div>
-    </a>
 </div>
+
+<footer>
+    玉珽老師版權所有 © 2026
+</footer>
 
 </body>
 </html>
