@@ -299,7 +299,7 @@
     }
 
     // 初始化介面注音
-    document.getElementById('title-login').innerHTML = parseRightBopomofo("的[ㄉㄜ˙]大[ㄉㄚˋ]哥[ㄍㄜ]、得[ㄉㄜˊ]小[ㄒㄧㄠˇ]弟[ㄉㄧˋ]");
+    document.getElementById('title-login').innerHTML = parseRightBopomofo("的[ㄉㄜ˙]大[ㄉㄚˋ]哥[ㄍㄜ]、得[ㄉㄜ˙]小[ㄒㄧㄠˇ]弟[ㄉㄧˋ]");
     document.getElementById('btn-start').innerHTML = parseRightBopomofo("開[ㄎㄞ]始[ㄕˇ]遊[ㄧㄡˊ]戲[ㄒㄧˋ]");
     document.getElementById('result-title').innerHTML = parseRightBopomofo("遊[ㄧㄡˊ]戲[ㄒㄧˋ]結[ㄐㄧㄝˊ]束[ㄕㄨˋ]");
     document.getElementById('btn-restart').innerHTML = parseRightBopomofo("重[ㄔㄨㄥˊ]新[ㄒㄧㄣ]開[ㄎㄞ]始[ㄕˇ]");
@@ -386,7 +386,7 @@
         
         // 重新繪製按鈕內容
         btn1.innerHTML = parseRightBopomofo("的[ㄉㄜ˙]") + '<div class="feedback-icon" id="icon-de1"></div>';
-        btn2.innerHTML = parseRightBopomofo("得[ㄉㄜˊ]") + '<div class="feedback-icon" id="icon-de2"></div>';
+        btn2.innerHTML = parseRightBopomofo("得[ㄉㄜ˙]") + '<div class="feedback-icon" id="icon-de2"></div>';
         
         const icon1 = document.getElementById('icon-de1');
         const icon2 = document.getElementById('icon-de2');
@@ -471,7 +471,7 @@
         });
 
         switchScreen('result-screen');
-        const finalScoreText = `${playerName} 得[ㄉㄜˊ]了[ㄌㄜ˙] ${score} 分[ㄈㄣ]！`;
+        const finalScoreText = `${playerName} 得[ㄉㄜ˙]了[ㄌㄜ˙] ${score} 分[ㄈㄣ]！`;
         document.getElementById('score-display').innerHTML = parseRightBopomofo(finalScoreText);
 
         saveHistory(playerName, score);
