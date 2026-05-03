@@ -226,7 +226,7 @@
         osc.type = 'sine';
         osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1);
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.8, audioCtx.currentTime); // 👈 音效調大 (0.1 -> 0.8)
         gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
         osc.connect(gain); gain.connect(audioCtx.destination);
         osc.start(); osc.stop(audioCtx.currentTime + 0.3);
@@ -238,13 +238,13 @@
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(110, audioCtx.currentTime);
         osc.frequency.linearRampToValueAtTime(55, audioCtx.currentTime + 0.2);
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.8, audioCtx.currentTime); // 👈 音效調大 (0.1 -> 0.8)
         gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
         osc.connect(gain); gain.connect(audioCtx.destination);
         osc.start(); osc.stop(audioCtx.currentTime + 0.2);
     }
 
-    // --- YouTube API 修正 ---
+    // --- YouTube API ---
     var tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
     var firstScriptTag = document.getElementsByTagName('script')[0];
@@ -253,7 +253,7 @@
     var ytPlayer;
     function onYouTubeIframeAPIReady() {
         ytPlayer = new YT.Player('player', {
-            height: '200', // 設定一個實體高度
+            height: '200',
             width: '200',
             videoId: '5-FPU8-fE_s',
             playerVars: { 
@@ -294,13 +294,11 @@
     }
 
     function startGame() {
-        // 確保 Web Audio 啟動
         if (audioCtx.state === 'suspended') audioCtx.resume();
         
-        // 強制嘗試啟動 YouTube 音樂
         if (ytPlayer && typeof ytPlayer.playVideo === 'function') {
             ytPlayer.unMute();
-            ytPlayer.setVolume(70);
+            ytPlayer.setVolume(20); // 👈 背景音樂調小 (70 -> 20)
             ytPlayer.playVideo();
         }
 
@@ -362,7 +360,7 @@
         document.getElementById('res-name').innerHTML = `<span style="color:#00d2ff">${pName}</span> ${explorerBpmf}：`;
         document.getElementById('res-correct').innerHTML = parseBpmf("成[ㄔㄥˊ]功[ㄍㄨㄥ]次[ㄘˋ]數[ㄕㄨˋ]：") + `<span class="num-highlight">${correctTotal}</span>`;
         document.getElementById('res-wrong').innerHTML = parseBpmf("失[ㄕ]誤[ㄨˋ]次[ㄘˋ]數[ㄕㄨˋ]：") + `<span class="num-highlight">${wrongTotal}</span>`;
-        document.getElementById('res-rate').innerHTML = parseBpmf("精[ㄐㄧㄥ]準[ㄓㄨㄣˇ]度[ㄉㄨˋ]：") + `<span class="num-highlight">${rate}%</span>`;
+        document.getElementById('res-rate').innerHTML = parseBpmf("精[ㄐㄧㄥ]準[ㄓㄨㄥˇ]度[ㄉㄨˋ]：") + `<span class="num-highlight">${rate}%</span>`;
         document.getElementById('btn-restart').innerHTML = parseBpmf("再[ㄗㄞˋ]次[ㄘˋ]傳[ㄔㄨㄢˊ]送[ㄙㄨㄥˋ]");
     }
 
