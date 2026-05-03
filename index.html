@@ -11,14 +11,16 @@
         }
         
         body {
-            margin: 0;
-            background: url('bg.jpg') no-repeat center center fixed;
-            background-size: cover;
-            font-family: 'DFKai-SB', '標楷體', serif;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
+    margin: 0;
+    /* 加入備用背景色 #f0f4f8，並確保檔案名稱完全正確 */
+    background: #f0f4f8 url('bg.jpg') no-repeat center center; 
+    background-size: cover;
+    /* 針對手機，改用 min-height 確保背景撐開 */
+    min-height: 100vh; 
+    font-family: 'DFKai-SB', '標楷體', serif;
+    display: flex;
+    flex-direction: column;
+    }
 
         header {
             background: rgba(136, 171, 117, 0.9);
