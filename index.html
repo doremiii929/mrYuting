@@ -11,16 +11,23 @@
         }
         
         body {
-    margin: 0;
-    /* 加入備用背景色 #f0f4f8，並確保檔案名稱完全正確 */
-    background: #f0f4f8 url('bg.jpg') no-repeat center center; 
-    background-size: cover;
-    /* 針對手機，改用 min-height 確保背景撐開 */
-    min-height: 100vh; 
-    font-family: 'DFKai-SB', '標楷體', serif;
-    display: flex;
-    flex-direction: column;
-    }
+            margin: 0;
+            font-family: 'DFKai-SB', '標楷體', serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #e8f5e9;
+            position: relative;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: url('bg.jpg') no-repeat center center;
+            background-size: cover;
+            z-index: -1;
+        }
 
         header {
             background: rgba(136, 171, 117, 0.9);
@@ -28,166 +35,240 @@
             width: 100%;
             padding: 30px 0;
             text-align: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
 
-        /* 遊戲區域大容器 */
         .main-content {
             flex: 1;
             max-width: 1200px;
-            margin: 0 auto;
+            margin: 20px auto;
             padding: 20px;
-            width: 100%;
-        }
-
-        /* 分類區塊設定 */
-        .category-section {
-            display: flex;
-            margin-bottom: 50px;
-            background: rgba(255, 255, 255, 0.4);
+            width: 90%;
+            background: rgba(255, 255, 255, 0.7);
             border-radius: 20px;
-            overflow: hidden;
-            border: 2px solid rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(5px);
         }
 
-        /* 左側標題欄 */
+        /* 領域標籤 */
         .category-label {
-            writing-mode: vertical-lr; /* 文字直打 */
-            padding: 20px 15px;
-            font-size: 28px;
+            display: inline-block;
+            padding: 10px 25px;
+            border-radius: 30px;
+            font-size: 24px;
             font-weight: bold;
             color: white;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        }
+        .bg-chinese { background-color: #ff9800; }
+        .bg-math { background-color: #2196f3; }
+
+        /* --- 新增：子分類標題 --- */
+        .sub-category-title {
+            font-size: 20px;
+            color: #444;
+            margin: 15px 0 10px 10px;
+            border-left: 5px solid #88ab75;
+            padding-left: 10px;
+        }
+
+        /* --- 修正：滑動容器結構 --- */
+        .slider-wrapper {
+            position: relative;
             display: flex;
             align-items: center;
-            justify-content: center;
-            letter-spacing: 5px;
-            min-width: 60px;
+            margin-bottom: 30px;
         }
 
-        /* 不同科目的顏色 */
-        .bg-chinese { background-color: #e67e22; } /* 橘色代表國語 */
-        .bg-math { background-color: #3498db; }    /* 藍色代表數學 */
-
-        /* 右側遊戲卡片容器 */
-        .game-grid {
-            display: grid;
-            /* 一排 4 個，間距 20px */
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        .game-slider {
+            display: flex;
+            overflow-x: auto;
+            scroll-behavior: smooth;
             gap: 20px;
-            padding: 20px;
-            flex: 1;
+            padding: 10px;
+            scrollbar-width: none; /* 隱藏滾動條 (Firefox) */
         }
 
-        /* 卡片樣式 */
+        .game-slider::-webkit-scrollbar {
+            display: none; /* 隱藏滾動條 (Chrome/Safari) */
+        }
+
         .game-card {
-            background: rgba(255, 255, 255, 0.9);
+            flex: 0 0 250px; /* 固定寬度，不壓縮 */
+            background: white;
             border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            text-align: center;
             padding: 20px;
-            transition: all 0.3s;
-            cursor: pointer;
-            border: 3px solid #fff;
             text-decoration: none;
             color: #333;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            height: 180px;
+            text-align: center;
+            transition: transform 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
         .game-card:hover {
-            transform: translateY(-8px);
-            border-color: #88ab75;
-            background: white;
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
         }
 
-        .game-icon { font-size: 40px; margin-bottom: 10px; }
-        .game-title { font-size: 20px; font-weight: bold; margin-bottom: 5px; }
-        .game-desc { font-size: 14px; color: #666; line-height: 1.4; }
-
-        /* 網底版權宣告 */
-        footer {
-            background: rgba(0, 0, 0, 0.6);
+        /* --- 新增：左右箭頭按鈕 --- */
+        .nav-btn {
+            background: rgba(0,0,0,0.3);
             color: white;
-            text-align: center;
-            padding: 15px 0;
-            font-size: 16px;
-            width: 100%;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: 0.3s;
         }
+        .nav-btn:hover { background: rgba(0,0,0,0.6); }
 
-        /* 手機版適應 */
-        @media (max-width: 768px) {
-            .category-section { flex-direction: column; }
-            .category-label { writing-mode: horizontal-tb; min-width: auto; padding: 10px; }
-            .game-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
-        }
+        footer { text-align: center; padding: 20px; background: rgba(0,0,0,0.05); }
+
     </style>
 </head>
 <body>
 
-<header>
-    <h1>🌟 玉珽老師的遊戲教室 🌟</h1>
-    <p>挑選一個科目，開始挑戰吧！</p>
-</header>
+    <header>
+        <h1>🌟 玉珽老師的遊戲教室 🌟</h1>
+    </header>
 
-<div class="main-content">
-    
-    <div class="category-section">
-        <div class="category-label bg-chinese">國語領域</div>
-        <div class="game-grid">
-            <a href="game-de/" class="game-card">
-                <div class="game-icon">🍎</div>
-                <div class="game-title">「的」與「得」</div>
-                <div class="game-desc">分辨用法練習</div>
-            </a>
-            <a href="game-zai/" class="game-card">
-                <div class="game-icon">🍄</div>
-                <div class="game-title">「在」與「再」</div>
-                <div class="game-desc">分辨用法練習</div>
-            </a>
-            <a href="https://es-d-8393543720260422-019da988-f81b-75e2-af8d-7bd68f11fe2b.codepen.dev/" target="_blank" class="game-card">
-                <div class="game-icon">🪵</div>
-                <div class="game-title">雙人量詞對戰</div>
-                <div class="game-desc">made by threads:rose_scott老師</div>
-            </a>
+    <div class="main-content">
+        
+        <div class="category-section">
+            <div class="category-label bg-chinese">國語領域</div>
+            
+            <div class="sub-category-title">📖 國字用法</div>
+            <div class="slider-wrapper">
+                <button class="nav-btn" onclick="slideScroll('chinese-1', -1)">❮</button>
+                <div class="game-slider" id="chinese-1">
+                    <a href="game-zai" class="game-card">
+                        <div style="font-size:40px">🔍</div>
+                        <div style="font-weight:bold">「在」與「再」</div>
+                        <div style="color:#666; font-size:14px">分辨用法練習</div>
+                    </a>
+                    <a href="game-de" class="game-card">
+                        <div style="font-size:40px">🖊️</div>
+                        <div style="font-weight:bold">「的」與「得」</div>
+                        <div style="color:#666; font-size:14px">分辨用法練習</div>
+                    </a>
+                    </div>
+                <button class="nav-btn" onclick="slideScroll('chinese-1', 1)">❯</button>
             </div>
-    </div>
+            <div class="sub-category-title">🏷️ 量詞</div>
+                 <div class="slider-wrapper">
+                 <button class="nav-btn" onclick="slideScroll('new-id-01', -1)">❮</button>
+                  
+                  <div class="game-slider" id="new-id-01">
+                     <a href="https://es-d-8393543720260422-019da988-f81b-75e2-af8d-7bd68f11fe2b.codepen.dev/" class="game-card">
+                    <div style="font-size:40px">🎮</div>
+                    <div style="font-weight:bold">雙人量詞對戰</div>
+                    <div style="color:#666; font-size:14px">made by threads:rose_scott老師</div>
+        </a>
+        </div>
 
-    <div class="category-section">
-        <div class="category-label bg-math">數學領域</div>
-        <div class="game-grid">
-            <a href="game-multiplication" class="game-card">
-                <div class="game-icon">✖️</div>
-                <div class="game-title">九九乘法(全)</div>
-                <div class="game-desc">單人快速心算挑戰</div>
-
-            </a>
-            <a href="https://es-d-8393543720260422-019daa43-d317-74e4-abb9-8f9c8835f53b.codepen.dev/" target="_blank" class="game-card">
-                <div class="game-icon">🏠</div>
-                <div class="game-title">數感創世神-雙人計算對戰</div>
-                <div class="game-desc">made by threads:rose_scott老師</div>
-            
-            </a>
-            <a href="game-2.4.5.8" class="game-card">
-                <div class="game-icon">❌</div>
-                <div class="game-title">2.4.5.8乘法</div>
-                <div class="game-desc">單人快速心算挑戰</div>
-            </a>
-            
-            </a>
-            <a href="game-2.4.5.8plus" class="game-card">
-                <div class="game-icon">👥</div>
-                <div class="game-title">2.4.5.8乘法</div>
-                <div class="game-desc">雙人快速心算對戰！</div>
-            </a>
-    </div>
-
+    <button class="nav-btn" onclick="slideScroll('new-id-01', 1)">❯</button>
 </div>
+        </div>
 
-<footer>
-    玉珽老師版權所有 © 2026
-</footer>
+        <div class="category-section">
+            <div class="category-label bg-math">數學領域</div>
+            
+            <div class="sub-category-title">✖️ 乘法練習</div>
+            <div class="slider-wrapper">
+                <button class="nav-btn" onclick="slideScroll('math-1', -1)">❮</button>
+                <div class="game-slider" id="math-1">
+                    <a href="game-multiplication" class="game-card">
+                        <div style="font-size:40px">🚀</div>
+                        <div style="font-weight:bold">九九乘法全集</div>
+                        <div style="color:#666; font-size:14px">單人快速心算挑戰</div>
+                    </a>
+                    <a href="game-2.4.5.8" class="game-card">
+                        <div style="font-size:40px">⚔️</div>
+                        <div style="font-weight:bold">2.4.5.8 乘法單人模式</div>
+                        <div style="color:#666; font-size:14px">單人快速心算</div>
+                    </a>
+                    <a href="game-2.4.5.8plus" class="game-card">
+                        <div style="font-size:40px">🧩</div>
+                        <div style="font-weight:bold">2.4.5.8 乘法雙人對戰</div>
+                        <div style="color:#666; font-size:14px">雙人PK模式</div>
+                    </a>
+                    <a href="#" class="game-card">
+                        <div style="font-size:40px">🏗️測試</div>
+                        <div style="font-weight:bold">數感創世神</div>
+                        <div style="color:#666; font-size:14px">雙人計算遊戲</div>
+                    </a>
+                </div>
+                <button class="nav-btn" onclick="slideScroll('math-1', 1)">❯</button>
+            </div>
+            <div class="sub-category-title">🏷️ 基本計算</div>
+             <div class="slider-wrapper">
+                <button class="nav-btn" onclick="slideScroll('new-id-01', -1)">❮</button>
+     
+                <div class="game-slider" id="new-id-01">
+              <a href="https://es-d-8393543720260422-019daa43-d317-74e4-abb9-8f9c8835f53b.codepen.dev/" class="game-card">
+            <div style="font-size:40px">🏗️</div>
+            <div style="font-weight:bold">數感創世神-雙人計算對戰</div>
+            <div style="color:#666; font-size:14px">made by threads:rose_scott老師</div>
+        </a>
+        </div>
 
+    <button class="nav-btn" onclick="slideScroll('new-id-01', 1)">❯</button>
+</div>
+        </div>
+
+    </div>
+
+    <footer>
+        &copy; 2024 玉珽老師的遊戲教室 - 版權所有
+    </footer>
+
+    <script>
+        // 處理箭頭點擊滾動
+        function slideScroll(id, direction) {
+            const container = document.getElementById(id);
+            const scrollAmount = 300; // 每次按箭頭滾動的距離
+            container.scrollBy({
+                left: direction * scrollAmount,
+                behavior: 'smooth'
+            });
+        }
+
+        // 支援滑鼠拖拽滑動
+        const sliders = document.querySelectorAll('.game-slider');
+        sliders.forEach(slider => {
+            let isDown = false;
+            let startX;
+            let scrollLeft;
+
+            slider.addEventListener('mousedown', (e) => {
+                isDown = true;
+                slider.style.cursor = 'grabbing';
+                startX = e.pageX - slider.offsetLeft;
+                scrollLeft = slider.scrollLeft;
+            });
+            slider.addEventListener('mouseleave', () => {
+                isDown = false;
+                slider.style.cursor = 'pointer';
+            });
+            slider.addEventListener('mouseup', () => {
+                isDown = false;
+                slider.style.cursor = 'pointer';
+            });
+            slider.addEventListener('mousemove', (e) => {
+                if(!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - slider.offsetLeft;
+                const walk = (x - startX) * 2; // 滑動速度
+                slider.scrollLeft = scrollLeft - walk;
+            });
+        });
+    </script>
 </body>
 </html>
