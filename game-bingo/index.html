@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>國字賓果</title>
     <style>
         @font-face {
@@ -20,6 +20,7 @@
         /* --- 1. 手機優化：防止點擊藍框與誤選文字 --- */
         * {
             -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box; /* 確保邊框不撐破容器 */
         }
 
         body {
@@ -31,7 +32,7 @@
             flex-direction: column;
             align-items: center;
             overflow-x: hidden;
-            user-select: none; /* 防止手機長按選取文字 */
+            user-select: none;
             -webkit-user-select: none;
         }
 
@@ -41,150 +42,131 @@
             -webkit-user-select: auto;
         }
 
-        /* --- 視覺重點：6 朵美麗之花 --- */
+        /* --- 背景之花 --- */
         .flower {
-            position: fixed;
-            z-index: -1;
-            pointer-events: none;
+            position: fixed; z-index: -1; pointer-events: none;
             filter: drop-shadow(2px 2px 5px rgba(0,0,0,0.1));
         }
-        .f1 { top: 5%; left: 2%; width: 180px; transform: rotate(-15deg); }
-        .f2 { top: 12%; right: 3%; width: 110px; transform: rotate(20deg); }
-        .f3 { top: 45%; left: -3%; width: 90px; }
-        .f4 { bottom: 10%; right: 2%; width: 220px; }
-        .f5 { bottom: 5%; left: 5%; width: 130px; }
-        .f6 { top: 40%; right: -2%; width: 100px; }
+        .f1 { top: 5%; left: 2%; width: 15vw; max-width: 180px; transform: rotate(-15deg); }
+        .f2 { top: 12%; right: 3%; width: 10vw; max-width: 110px; transform: rotate(20deg); }
+        .f3 { top: 45%; left: -3%; width: 8vw; max-width: 90px; }
+        .f4 { bottom: 10%; right: 2%; width: 20vw; max-width: 220px; }
+        .f5 { bottom: 5%; left: 5%; width: 12vw; max-width: 130px; }
+        .f6 { top: 40%; right: -2%; width: 9vw; max-width: 100px; }
         
         .spinning { animation: spin 20s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        header { text-align: center; margin-top: 40px; z-index: 10; }
+        header { text-align: center; margin-top: 3vh; z-index: 10; width: 90%; }
 
-        /* --- 標題與手機適配 --- */
         h1 { 
             color: var(--primary-green); 
-            font-size: 72px; 
+            font-size: clamp(32px, 8vw, 72px); /* 動態縮放字體 */
             margin: 0;
-            text-shadow: 3px 3px 0px white, 5px 5px 15px rgba(0,0,0,0.1);
-            letter-spacing: 8px;
+            text-shadow: 2px 2px 0px white, 4px 4px 10px rgba(0,0,0,0.1);
+            letter-spacing: 4px;
         }
-        #timer { font-size: 32px; color: #333; font-weight: bold; margin-top: 10px; }
+        #timer { font-size: clamp(18px, 4vw, 32px); color: #333; font-weight: bold; margin-top: 5px; }
 
-        @media (max-width: 600px) {
-            h1 { font-size: 48px; letter-spacing: 4px; }
-            #timer { font-size: 24px; }
-            .btn { font-size: 22px !important; padding: 12px 25px !important; }
-            .instruction-box p { font-size: 18px !important; }
-            .cell input { font-size: 32px !important; }
-        }
-
-        #setup-screen, #result-screen {
+        /* --- 容器置中優化 --- */
+        #setup-screen, #result-screen, #game-screen {
             background: rgba(255, 255, 255, 0.85);
-            padding: 45px;
-            border-radius: 40px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 20px;
+            border-radius: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
             text-align: center;
-            margin-top: 30px;
-            width: 85%;
-            max-width: 750px;
+            margin: 20px auto;
+            width: 90%; /* 平板寬度自適應 */
+            max-width: 800px;
             backdrop-filter: blur(10px);
             border: 4px solid white;
+            z-index: 5;
         }
 
         #result-screen { display: none; }
-        #game-screen { display: none; width: 95%; max-width: 850px; margin-top: 20px; }
+        #game-screen { display: none; }
 
-        h3 { font-size: 36px; color: #2d471a; margin-bottom: 25px; }
+        h3 { font-size: clamp(20px, 5vw, 36px); color: #2d471a; margin-bottom: 15px; }
 
         .option-group {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-bottom: 35px;
-            flex-wrap: wrap;
+            display: flex; justify-content: center; gap: 10px;
+            margin-bottom: 20px; flex-wrap: wrap;
         }
 
         .btn {
-            background: var(--primary-green);
-            color: white;
-            border: none;
-            padding: 18px 35px;
-            font-size: 28px;
-            border-radius: 60px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: 'DFKai-SB';
-            box-shadow: 0 6px 0px #2d471a;
+            background: var(--primary-green); color: white; border: none;
+            padding: 12px 24px; font-size: clamp(16px, 3vw, 28px); border-radius: 50px;
+            cursor: pointer; transition: all 0.2s; font-family: 'DFKai-SB';
+            box-shadow: 0 4px 0px #2d471a;
             touch-action: manipulation;
         }
-        .btn:active { transform: translateY(4px); box-shadow: 0 2px 0px #2d471a; }
-        .btn.active { background: #f9a825; box-shadow: 0 6px 0px #c67100; }
-        .btn.go { background: #5d4037; box-shadow: 0 6px 0px #3e2723; width: 100%; margin-top: 20px;}
+        .btn:active { transform: translateY(2px); box-shadow: 0 2px 0px #2d471a; }
+        .btn.active { background: #f9a825; box-shadow: 0 4px 0px #c67100; }
+        .btn.go { background: #5d4037; box-shadow: 0 4px 0px #3e2723; width: 100%; margin-top: 10px;}
 
         .instruction-box {
-            background: rgba(255, 255, 255, 0.6);
-            padding: 30px;
-            border-radius: 25px;
-            text-align: left;
-            border: 2px dashed var(--primary-green);
-            margin: 20px 0;
+            background: rgba(255, 255, 255, 0.6); padding: 15px; border-radius: 20px;
+            text-align: left; border: 2px dashed var(--primary-green); margin: 15px 0;
         }
-        .instruction-box p {
-            font-size: 22px;
-            line-height: 1.6;
-            margin: 10px 0;
-            color: #1b5e20;
-            font-weight: bold;
-        }
+        .instruction-box p { font-size: clamp(14px, 2.5vw, 20px); line-height: 1.5; margin: 5px 0; color: #1b5e20; font-weight: bold; }
 
+        /* --- 賓果格子優化 --- */
         .grid-container {
             display: grid;
-            gap: 15px;
+            gap: 8px; /* 平板間距縮小 */
             background: rgba(255,255,255,0.9);
-            padding: 25px;
-            border-radius: 30px;
-            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            padding: 15px;
+            border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            margin: 0 auto;
+            width: 100%;
+            max-width: 600px; /* 限制最大寬度，避免格子在平板上變太巨型 */
         }
 
         .cell {
             aspect-ratio: 1/1;
             background: white;
-            border: 4px solid #c8e6c9;
-            border-radius: 15px;
+            border: 2px solid #c8e6c9;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             position: relative;
+            overflow: hidden;
         }
         .cell input {
             width: 100%; height: 100%; border: none; background: transparent;
-            text-align: center; font-size: 45px; font-family: 'DFKai-SB'; color: black; font-weight: bold;
+            text-align: center; font-size: clamp(20px, 6vw, 45px); /* 隨螢幕縮放字體 */
+            font-family: 'DFKai-SB'; color: black; font-weight: bold;
+            padding: 0; margin: 0;
         }
         .cell.marked { background-color: var(--accent-yellow); border-color: #fbc02d; }
         
-        .cell.line-h::after { content:''; position:absolute; width:100%; height:8px; background:var(--win-red); z-index:2; }
-        .cell.line-v::after { content:''; position:absolute; width:8px; height:100%; background:var(--win-red); z-index:2; }
-        .cell.line-d1::after { content:''; position:absolute; width:145%; height:8px; background:var(--win-red); transform:rotate(45deg); z-index:2; }
-        .cell.line-d2::after { content:''; position:absolute; width:145%; height:8px; background:var(--win-red); transform:rotate(-45deg); z-index:2; }
+        /* 連線樣式優化 */
+        .cell.line-h::after, .cell.line-v::after, .cell.line-d1::after, .cell.line-d2::after {
+            content:''; position:absolute; background:var(--win-red); z-index:2;
+        }
+        .cell.line-h::after { width:100%; height:6px; top: 50%; transform: translateY(-50%); }
+        .cell.line-v::after { height:100%; width:6px; left: 50%; transform: translateX(-50%); }
+        .cell.line-d1::after { width:150%; height:6px; transform:rotate(45deg); }
+        .cell.line-d2::after { width:150%; height:6px; transform:rotate(-45deg); }
 
         #bingo-btn {
-            display: none;
-            background: #e53935;
-            font-size: 50px;
-            padding: 25px 80px;
-            animation: bounce 0.8s infinite;
-            margin-top: 30px;
+            display: none; background: #e53935; font-size: clamp(24px, 6vw, 50px);
+            padding: 15px 50px; animation: bounce 0.8s infinite; margin-top: 20px;
+            border-radius: 50px;
         }
-        @keyframes bounce { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+        @keyframes bounce { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
 
-        #result-screen h1 { font-size: 100px; color: #ef6c00; }
+        #result-screen h1 { font-size: clamp(50px, 15vw, 100px); color: #ef6c00; }
     </style>
 </head>
 <body>
 
     <audio id="snd-bingo" src="powerup03.mp3"></audio>
     <audio id="snd-win" src="kids-shouting-yeah.mp3"></audio>
+
 
     <img src="flower1.png" class="flower f1" id="fl1">
     <img src="flower2.png" class="flower f2" id="fl2">
@@ -217,14 +199,14 @@
             <p>(1)請教師及學生先確認是否為同個格子數與賓果連線數</p>
             <p>(2)自行在格子上打上國字</p>
             <p>(3)點擊方框內的國字後，方框即會變黃色</p>
-            <p>(4)當可連成一條直線或對角線即可勝利</p>
+            <p>(4)當可連線即可勝利</p>
         </div>
         <button class="btn go" onclick="initGame()">進入準備階段 ➔</button>
     </div>
 
     <div id="game-screen">
-        <div style="text-align: center; margin-bottom: 25px;">
-            <span id="mode-text" style="color: #ef6c00; font-size: 28px; font-weight: bold; background:white; padding:5px 15px; border-radius:10px;">【請在空格輸入國字】</span>
+        <div style="text-align: center; margin-bottom: 15px;">
+            <span id="mode-text" style="color: #ef6c00; font-size: clamp(16px, 3vw, 24px); font-weight: bold; background:white; padding:5px 15px; border-radius:10px;">【編輯模式】</span>
             <br><br>
             <button class="btn" id="start-play-btn" style="background:#2e7d32" onclick="startPlaying()">填好了，開始玩！</button>
         </div>
@@ -234,11 +216,12 @@
 
     <div id="result-screen">
         <h1>🏆 賓果！</h1>
-        <p id="final-time" style="font-size: 40px; font-weight: bold;"></p>
-        <button class="btn" style="margin-top:30px" onclick="location.reload()">再玩一次</button>
+        <p id="final-time" style="font-size: clamp(24px, 5vw, 40px); font-weight: bold;"></p>
+        <button class="btn" style="margin-top:20px" onclick="location.reload()">再玩一次</button>
     </div>
 
 <script>
+    /* 以下邏輯完全維持不變，僅修正 CSS 排版 */
     let gridSize = 16;
     let side = 4;
     let neededLines = 1;
@@ -276,7 +259,7 @@
 
     function startPlaying() {
         isPlaying = true;
-        document.getElementById('mode-text').innerText = "【點擊國字變黃色】";
+        document.getElementById('mode-text').innerText = "【遊玩模式】";
         document.getElementById('start-play-btn').style.display = 'none';
         document.querySelectorAll('.cell input').forEach(input => { 
             input.readOnly = true; 
@@ -322,18 +305,13 @@
     }
 
     function showWin() {
-        // 播放賓果按鈕音效
         document.getElementById('snd-bingo').play();
-
         setTimeout(() => {
             clearInterval(timerInterval);
             document.getElementById('game-screen').style.display = 'none';
             document.getElementById('result-screen').style.display = 'block';
             document.getElementById('final-time').innerText = "完成" + document.getElementById('timer').innerText;
-            
-            // 播放獲勝歡呼音效
             document.getElementById('snd-win').play();
-
             for(let i=1; i<=6; i++) document.getElementById('fl'+i).classList.add('spinning');
         }, 500); 
     }
