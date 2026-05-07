@@ -40,7 +40,7 @@
 
         .title-image { width: 80%; max-width: 350px; margin-bottom: 20px; }
 
-        /* ✅ 直式選項按鈕設計 */
+        /* ✅ 強制直式選項按鈕 */
         .options-container { 
             display: flex; 
             justify-content: center; 
@@ -50,44 +50,43 @@
 
         .opt-btn {
             width: 140px; 
-            height: 280px; /* 增加高度 */
+            height: 280px; 
             padding: 10px;
             border-radius: 30px;
             border: 5px solid white;
             background: rgba(255,255,255,0.9);
             cursor: pointer;
             display: flex;
-            flex-direction: column; /* 強制垂直排列 */
+            flex-direction: column; 
             align-items: center;
             justify-content: center;
             position: relative;
             box-shadow: 0 8px 15px rgba(0,0,0,0.1);
         }
 
-        /* 注音符號主體（ㄅㄆㄇ） */
         .symbol {
-            font-size: 70px; /* 符號加大 */
+            font-size: 75px; 
             line-height: 1.1;
             font-weight: bold;
             color: #2c5d63;
         }
 
-        /* ✅ 聲調符號（ˊˇˋ） */
+        /* ✅ 聲調符號加大加粗 */
         .tone-mark {
             position: absolute;
-            font-size: 60px; /* 聲調符號超級加倍 */
+            font-size: 65px; 
             font-weight: 900;
-            color: #e53935; /* 醒目的紅色 */
-            right: 15px; /* 靠右邊 */
-            top: 50%; /* 置中高度 */
-            transform: translateY(-50%); /* 垂直置中修正 */
+            color: #e53935; 
+            right: 12px; 
+            top: 50%; 
+            transform: translateY(-50%);
         }
 
-        /* 輕聲符號（˙） */
         .dot-mark {
-            font-size: 60px;
+            font-size: 65px;
             color: #e53935;
-            margin-bottom: -10px;
+            margin-bottom: -15px;
+            font-weight: 900;
         }
 
         .question-card { font-size: 110px; color: #333; margin: 10px 0; font-weight: bold; }
@@ -96,7 +95,7 @@
         .wrong { background-color: #ffb7b2 !important; border-color: #ff8a80 !important; }
 
         #start-screen, #game-area, #result-area { display: none; }
-        #start-screen { display: block; } /* 預設顯示開始 */
+        #start-screen { display: block; }
 
         .btn-start {
             background: #ffb7b2; color: #444; border: none;
@@ -125,7 +124,7 @@
         <div id="game-area">
             <div class="timer-bar">⏱ <span id="time-left">60</span> 秒</div>
             <div id="q-count" style="font-size:18px; color:#666;">進度：1 / 30</div>
-            <div class="question-card" id="q-text">讓</div>
+            <div class="question-card" id="q-text"></div>
             <div class="options-container">
                 <button class="opt-btn" onclick="checkAnswer(0)" id="opt0"></button>
                 <button class="opt-btn" onclick="checkAnswer(1)" id="opt1"></button>
@@ -142,7 +141,8 @@
     </div>
 
     <script>
-        const allQuiz = [
+        // 🌟 這裡是老師的大題庫，您可以無限增加題目
+        const hugeQuizLibrary = [
             { q: "讓", a: "ㄖㄤˋ", o: ["ㄖㄤˋ", "ㄌㄤˋ"] },
             { q: "覺", a: "ㄐㄩㄝˊ", o: ["ㄐㄩㄝˊ", "ㄐㄩㄝˇ"] },
             { q: "豐", a: "ㄈㄥ", o: ["ㄈㄥ", "ㄈㄣ"] },
@@ -172,10 +172,16 @@
             { q: "是", a: "ㄕˋ", o: ["ㄕˋ", "ㄙˋ"] },
             { q: "正", a: "ㄓㄥˋ", o: ["ㄓㄥˋ", "ㄗㄥˋ"] },
             { q: "山", a: "ㄕㄢ", o: ["ㄕㄢ", "ㄙㄢ"] },
-            { q: "花", a: "ㄏㄨㄚ", o: ["ㄏㄨㄚ", "ㄏㄨㄚˋ"] }
+            { q: "花", a: "ㄏㄨㄚ", o: ["ㄏㄨㄚ", "ㄏㄨㄚˋ"] },
+            { q: "知", a: "ㄓ", o: ["ㄓ", "ㄗ"] },
+            { q: "鄰", a: "ㄌㄧㄣˊ", o: ["ㄌㄧㄣˊ", "ㄌㄧㄥˊ"] },
+            { q: "朋", a: "ㄆㄥˊ", o: ["ㄆㄥˊ", "ㄆㄣˊ"] },
+            { q: "虹", a: "ㄏㄨㄥˊ", o: ["ㄏㄥˊ", "ㄏㄨㄥˊ"] },
+            { q: "忙", a: "ㄇㄤˊ", o: ["ㄇㄤˊ", "ㄇㄢˊ"] },
+            // 您可以在下面繼續增加題目，格式如上
         ];
 
-        let quizData = [];
+        let gameQuiz = []; // 存放被選出的 30 題
         let currentIdx = 0;
         let score = { correct: 0, wrong: 0 };
         let timeLeft = 60;
@@ -188,36 +194,29 @@
             }
         }
 
-        // ✅ 核心修正：手動拆解注音並排列
         function renderBopomofo(str) {
             const tones = ["ˊ", "ˇ", "ˋ", "˙"];
             let mainSymbols = "";
             let toneMark = "";
-            
-            // 分離聲調
             for(let char of str) {
-                if(tones.includes(char)) {
-                    toneMark = char;
-                } else {
-                    mainSymbols += `<div class="symbol">${char}</div>`;
-                }
+                if(tones.includes(char)) toneMark = char;
+                else mainSymbols += `<div class="symbol">${char}</div>`;
             }
-
-            // 組合 HTML
             let html = mainSymbols;
-            if(toneMark === "˙") {
-                html = `<div class="dot-mark">˙</div>` + html; // 輕聲在頭
-            } else if(toneMark !== "") {
-                html += `<div class="tone-mark">${toneMark}</div>`; // 其他聲調在側
-            }
+            if(toneMark === "˙") html = `<div class="dot-mark">˙</div>` + html;
+            else if(toneMark !== "") html += `<div class="tone-mark">${toneMark}</div>`;
             return html;
         }
 
         function startGame() {
             const name = document.getElementById('player-name').value;
             if(!name) { alert("請輸入名字喔！"); return; }
-            quizData = [...allQuiz];
-            shuffle(quizData);
+            
+            // 🌟 核心功能：先打亂題庫，然後只切出前 30 題
+            let tempLib = [...hugeQuizLibrary];
+            shuffle(tempLib);
+            gameQuiz = tempLib.slice(0, 30); 
+            
             document.getElementById('display-name').innerText = name;
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('game-area').style.display = 'block';
@@ -230,25 +229,23 @@
         }
 
         function showQuestion() {
-            if(currentIdx >= 30) { endGame(); return; }
-            document.getElementById('q-count').innerText = `進度：${currentIdx + 1} / 30`;
-            const data = quizData[currentIdx];
+            if(currentIdx >= gameQuiz.length) { endGame(); return; }
+            document.getElementById('q-count').innerText = `進度：${currentIdx + 1} / ${gameQuiz.length}`;
+            const data = gameQuiz[currentIdx];
             document.getElementById('q-text').innerText = data.q;
             let opts = [...data.o];
             shuffle(opts);
-            
             document.getElementById('opt0').innerHTML = renderBopomofo(opts[0]);
             document.getElementById('opt0').dataset.val = opts[0];
             document.getElementById('opt1').innerHTML = renderBopomofo(opts[1]);
             document.getElementById('opt1').dataset.val = opts[1];
-            
             document.getElementById('opt0').className = 'opt-btn';
             document.getElementById('opt1').className = 'opt-btn';
         }
 
         function checkAnswer(idx) {
             const chosen = document.getElementById('opt' + idx).dataset.val;
-            const correctAns = quizData[currentIdx].a;
+            const correctAns = gameQuiz[currentIdx].a;
             if(chosen === correctAns) {
                 score.correct++;
                 document.getElementById('snd-right').play();
