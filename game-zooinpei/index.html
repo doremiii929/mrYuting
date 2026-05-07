@@ -16,21 +16,19 @@
             overflow: hidden;
         }
 
-        /* 1. 背景圖設定 */
         .bg-container {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: url('bg.png') no-repeat center center; /* 這裡換成您的背景檔名 */
+            background: url('bg.png') no-repeat center center;
             background-size: cover;
             z-index: -2;
         }
 
-        /* 雲朵毛玻璃面板 */
         .cloud-panel {
             position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 90%; max-width: 650px;
-            padding: 40px;
-            background: rgba(255, 255, 255, 0.4);
+            width: 95%; max-width: 600px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.45);
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
             border-radius: 60px;
@@ -40,44 +38,80 @@
             z-index: 10;
         }
 
-        /* 2. 遊戲名稱改為圖片 */
-        .title-image {
-            width: 80%;
-            max-width: 400px;
-            margin-bottom: 20px;
-        }
+        .title-image { width: 80%; max-width: 350px; margin-bottom: 20px; }
 
-        .input-group { margin: 20px 0; }
         input[type="text"] {
             padding: 15px; font-size: 24px; border-radius: 30px; border: 2px solid #aec6cf;
-            width: 80%; text-align: center; font-family: 'DFKai-SB';
+            width: 70%; text-align: center; font-family: 'DFKai-SB';
         }
 
         .btn-start {
-            background: #ffb7b2; color: #555; border: none;
-            padding: 15px 40px; font-size: 28px; border-radius: 50px;
+            background: #ffb7b2; color: #444; border: none;
+            padding: 12px 40px; font-size: 28px; border-radius: 50px;
             cursor: pointer; margin-top: 20px; box-shadow: 0 5px 0 #e5a4a0;
             font-weight: bold;
         }
 
         #game-area { display: none; }
-        .timer-bar { font-size: 32px; color: #ff6b6b; font-weight: bold; margin-bottom: 10px; }
-        
-        /* 題目字體加大 */
-        .question-card { font-size: 100px; color: #4a4a4a; margin: 20px 0; font-weight: bold; }
-        
-        .options-container { display: flex; flex-direction: column; gap: 15px; align-items: center; }
-        .opt-btn {
-            width: 85%; padding: 18px; font-size: 45px; border-radius: 25px;
-            border: 3px solid white; background: rgba(255,255,255,0.85);
-            cursor: pointer; transition: 0.2s; font-family: 'DFKai-SB';
+        .timer-bar { font-size: 30px; color: #ff6b6b; font-weight: bold; margin-bottom: 5px; }
+        .question-card { font-size: 110px; color: #333; margin: 10px 0; font-weight: bold; }
+
+        .options-container { 
+            display: flex; 
+            justify-content: center; 
+            gap: 40px; 
+            margin-top: 20px;
         }
 
-        .correct { background-color: #b2e2f2 !important; color: #2c5d63; }
-        .wrong { background-color: #ffb7b2 !important; color: #d32f2f; }
+        .opt-btn {
+            width: 150px; 
+            height: 240px; 
+            padding: 10px;
+            font-size: 60px; /* 注音主體字體 */
+            border-radius: 20px;
+            border: 4px solid white;
+            background: rgba(255,255,255,0.85);
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: 0.2s;
+            position: relative;
+        }
 
-        #result-area { display: none; font-size: 26px; }
-        .score-num { font-size: 45px; color: #2c5d63; font-weight: bold; }
+        .bopomofo-vertical {
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            letter-spacing: 5px;
+            line-height: 1;
+            display: inline-block;
+            font-weight: bold;
+            color: #2c5d63;
+        }
+
+        /* ✅ 聲調符號放大與定位調整 */
+        .tone {
+            position: absolute;
+            font-size: 45px; /* <--- 聲調符號從 30px 放大到 45px */
+            font-weight: bold;
+            color: #d32f2f; /* 稍微變紅一點讓小朋友更易分辨 */
+            right: 20px; /* 稍微往內移一點 */
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        /* ✅ 輕聲符號放大 */
+        .soft-tone {
+            font-size: 45px; /* 輕聲也同步放大 */
+            vertical-align: middle;
+            margin-bottom: -5px;
+        }
+
+        .correct { background-color: #b2e2f2 !important; }
+        .wrong { background-color: #ffb7b2 !important; }
+
+        #result-area { display: none; }
+        .score-num { font-size: 40px; color: #2c5d63; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -87,18 +121,18 @@
 
     <div class="bg-container"></div>
 
-    <div class="cloud-panel" id="main-panel">
+    <div class="cloud-panel">
         <div id="start-screen">
             <img src="title.png" alt="ㄅㄆㄇ注音配" class="title-image">
             <div class="input-group">
-                <input type="text" id="player-name" placeholder="輸入名字開始玩">
+                <input type="text" id="player-name" placeholder="輸入名字">
             </div>
             <button class="btn-start" onclick="startGame()">開始 ➔</button>
         </div>
 
         <div id="game-area">
             <div class="timer-bar">⏱ <span id="time-left">60</span> 秒</div>
-            <div id="q-count" style="font-size:20px; color:#666;">題次：1 / 30</div>
+            <div id="q-count" style="font-size:18px; color:#666;">進度：1 / 30</div>
             <div class="question-card" id="q-text">讓</div>
             <div class="options-container">
                 <button class="opt-btn" onclick="checkAnswer(0)" id="opt0"></button>
@@ -107,18 +141,15 @@
         </div>
 
         <div id="result-area">
-            <h2 style="font-size:40px">挑戰結果</h2>
-            <p><span id="display-name"></span> 同學</p>
-            <hr>
-            <p>正確：<span class="score-num" id="res-correct">0</span> 題</p>
-            <p>錯誤：<span style="color:#ff6b6b" id="res-wrong">0</span> 題</p>
+            <h2 style="font-size:36px">完成挑戰！</h2>
+            <p><span id="display-name"></span> 同學的成績：</p>
+            <p>正確：<span class="score-num" id="res-correct">0</span> | 錯誤：<span id="res-wrong">0</span></p>
             <p>正確率：<span class="score-num" id="res-rate">0</span> %</p>
             <button class="btn-start" onclick="location.reload()">再玩一次</button>
         </div>
     </div>
 
     <script>
-        // 30 題隨機題庫 (根據您的生字表)
         const allQuiz = [
             { q: "讓", a: "ㄖㄤˋ", o: ["ㄖㄤˋ", "ㄌㄤˋ"] },
             { q: "覺", a: "ㄐㄩㄝˊ", o: ["ㄐㄩㄝˊ", "ㄐㄩㄝˇ"] },
@@ -165,19 +196,31 @@
             }
         }
 
+        function formatBopomofo(str) {
+            const tones = ["ˊ", "ˇ", "ˋ", "˙"];
+            let main = str;
+            let tone = "";
+            tones.forEach(t => {
+                if(str.includes(t)) {
+                    main = str.replace(t, "");
+                    tone = t;
+                }
+            });
+            if(tone === "˙") {
+                return `<div class="bopomofo-vertical"><span class="soft-tone">˙</span>${main}</div>`;
+            }
+            return `<div class="bopomofo-vertical">${main}</div><div class="tone">${tone}</div>`;
+        }
+
         function startGame() {
             const name = document.getElementById('player-name').value;
             if(!name) { alert("請輸入名字喔！"); return; }
-            
             quizData = [...allQuiz];
-            shuffle(quizData); // 隨機題目
-            
+            shuffle(quizData);
             document.getElementById('display-name').innerText = name;
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('game-area').style.display = 'block';
-            
             showQuestion();
-            
             timer = setInterval(() => {
                 timeLeft--;
                 document.getElementById('time-left').innerText = timeLeft;
@@ -187,31 +230,33 @@
 
         function showQuestion() {
             if(currentIdx >= 30) { endGame(); return; }
-            
-            document.getElementById('q-count').innerText = `題次：${currentIdx + 1} / 30`;
+            document.getElementById('q-count').innerText = `進度：${currentIdx + 1} / 30`;
             const data = quizData[currentIdx];
             document.getElementById('q-text').innerText = data.q;
             
             let opts = [...data.o];
             shuffle(opts);
             
-            document.getElementById('opt0').innerText = opts[0];
-            document.getElementById('opt1').innerText = opts[1];
+            document.getElementById('opt0').innerHTML = formatBopomofo(opts[0]);
+            document.getElementById('opt0').dataset.val = opts[0];
+            document.getElementById('opt1').innerHTML = formatBopomofo(opts[1]);
+            document.getElementById('opt1').dataset.val = opts[1];
+            
             document.getElementById('opt0').className = 'opt-btn';
             document.getElementById('opt1').className = 'opt-btn';
         }
 
         function checkAnswer(idx) {
-            const chosen = document.getElementById('opt' + idx).innerText;
+            const chosen = document.getElementById('opt' + idx).dataset.val;
             const correctAns = quizData[currentIdx].a;
             
             if(chosen === correctAns) {
                 score.correct++;
-                document.getElementById('snd-right').play(); // 叮咚
+                document.getElementById('snd-right').play();
                 document.getElementById('opt' + idx).classList.add('correct');
             } else {
                 score.wrong++;
-                document.getElementById('snd-wrong').play(); // 逼逼
+                document.getElementById('snd-wrong').play();
                 document.getElementById('opt' + idx).classList.add('wrong');
             }
 
@@ -225,10 +270,8 @@
             clearInterval(timer);
             document.getElementById('game-area').style.display = 'none';
             document.getElementById('result-area').style.display = 'block';
-            
             const total = score.correct + score.wrong;
             const rate = total === 0 ? 0 : Math.round((score.correct / total) * 100);
-            
             document.getElementById('res-correct').innerText = score.correct;
             document.getElementById('res-wrong').innerText = score.wrong;
             document.getElementById('res-rate').innerText = rate;
