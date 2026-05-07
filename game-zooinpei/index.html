@@ -28,7 +28,7 @@
             transform: translate(-50%, -50%);
             width: 95%; max-width: 600px;
             padding: 30px;
-            background: rgba(255, 255, 255, 0.45);
+            background: rgba(255, 255, 255, 0.5);
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
             border-radius: 60px;
@@ -40,78 +40,70 @@
 
         .title-image { width: 80%; max-width: 350px; margin-bottom: 20px; }
 
-        input[type="text"] {
-            padding: 15px; font-size: 24px; border-radius: 30px; border: 2px solid #aec6cf;
-            width: 70%; text-align: center; font-family: 'DFKai-SB';
-        }
-
-        .btn-start {
-            background: #ffb7b2; color: #444; border: none;
-            padding: 12px 40px; font-size: 28px; border-radius: 50px;
-            cursor: pointer; margin-top: 20px; box-shadow: 0 5px 0 #e5a4a0;
-            font-weight: bold;
-        }
-
-        #game-area { display: none; }
-        .timer-bar { font-size: 30px; color: #ff6b6b; font-weight: bold; margin-bottom: 5px; }
-        .question-card { font-size: 110px; color: #333; margin: 10px 0; font-weight: bold; }
-
+        /* ✅ 直式選項按鈕設計 */
         .options-container { 
             display: flex; 
             justify-content: center; 
-            gap: 40px; 
+            gap: 50px; 
             margin-top: 20px;
         }
 
         .opt-btn {
-            width: 150px; 
-            height: 240px; 
+            width: 140px; 
+            height: 280px; /* 增加高度 */
             padding: 10px;
-            font-size: 60px; /* 注音主體字體 */
-            border-radius: 20px;
-            border: 4px solid white;
-            background: rgba(255,255,255,0.85);
+            border-radius: 30px;
+            border: 5px solid white;
+            background: rgba(255,255,255,0.9);
             cursor: pointer;
             display: flex;
-            justify-content: center;
+            flex-direction: column; /* 強制垂直排列 */
             align-items: center;
-            transition: 0.2s;
+            justify-content: center;
             position: relative;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
         }
 
-        .bopomofo-vertical {
-            writing-mode: vertical-rl;
-            text-orientation: upright;
-            letter-spacing: 5px;
-            line-height: 1;
-            display: inline-block;
+        /* 注音符號主體（ㄅㄆㄇ） */
+        .symbol {
+            font-size: 70px; /* 符號加大 */
+            line-height: 1.1;
             font-weight: bold;
             color: #2c5d63;
         }
 
-        /* ✅ 聲調符號放大與定位調整 */
-        .tone {
+        /* ✅ 聲調符號（ˊˇˋ） */
+        .tone-mark {
             position: absolute;
-            font-size: 45px; /* <--- 聲調符號從 30px 放大到 45px */
-            font-weight: bold;
-            color: #d32f2f; /* 稍微變紅一點讓小朋友更易分辨 */
-            right: 20px; /* 稍微往內移一點 */
-            top: 50%;
-            transform: translateY(-50%);
+            font-size: 60px; /* 聲調符號超級加倍 */
+            font-weight: 900;
+            color: #e53935; /* 醒目的紅色 */
+            right: 15px; /* 靠右邊 */
+            top: 50%; /* 置中高度 */
+            transform: translateY(-50%); /* 垂直置中修正 */
         }
 
-        /* ✅ 輕聲符號放大 */
-        .soft-tone {
-            font-size: 45px; /* 輕聲也同步放大 */
-            vertical-align: middle;
-            margin-bottom: -5px;
+        /* 輕聲符號（˙） */
+        .dot-mark {
+            font-size: 60px;
+            color: #e53935;
+            margin-bottom: -10px;
         }
 
-        .correct { background-color: #b2e2f2 !important; }
-        .wrong { background-color: #ffb7b2 !important; }
+        .question-card { font-size: 110px; color: #333; margin: 10px 0; font-weight: bold; }
+        .timer-bar { font-size: 30px; color: #ff6b6b; font-weight: bold; }
+        .correct { background-color: #b2e2f2 !important; border-color: #4fc3f7 !important; }
+        .wrong { background-color: #ffb7b2 !important; border-color: #ff8a80 !important; }
 
-        #result-area { display: none; }
-        .score-num { font-size: 40px; color: #2c5d63; font-weight: bold; }
+        #start-screen, #game-area, #result-area { display: none; }
+        #start-screen { display: block; } /* 預設顯示開始 */
+
+        .btn-start {
+            background: #ffb7b2; color: #444; border: none;
+            padding: 15px 45px; font-size: 28px; border-radius: 50px;
+            cursor: pointer; margin-top: 20px; box-shadow: 0 5px 0 #e5a4a0;
+            font-family: 'DFKai-SB';
+        }
     </style>
 </head>
 <body>
@@ -124,9 +116,9 @@
     <div class="cloud-panel">
         <div id="start-screen">
             <img src="title.png" alt="ㄅㄆㄇ注音配" class="title-image">
-            <div class="input-group">
-                <input type="text" id="player-name" placeholder="輸入名字">
-            </div>
+            <br>
+            <input type="text" id="player-name" placeholder="輸入名字" style="padding:15px; font-size:24px; border-radius:30px; border:2px solid #aec6cf; width:70%; text-align:center;">
+            <br>
             <button class="btn-start" onclick="startGame()">開始 ➔</button>
         </div>
 
@@ -143,8 +135,8 @@
         <div id="result-area">
             <h2 style="font-size:36px">完成挑戰！</h2>
             <p><span id="display-name"></span> 同學的成績：</p>
-            <p>正確：<span class="score-num" id="res-correct">0</span> | 錯誤：<span id="res-wrong">0</span></p>
-            <p>正確率：<span class="score-num" id="res-rate">0</span> %</p>
+            <p style="font-size:30px">正確：<b style="color:#2c5d63" id="res-correct">0</b> | 錯誤：<b style="color:#e53935" id="res-wrong">0</b></p>
+            <p>正確率：<span style="font-size:40px; color:#2c5d63" id="res-rate">0</span> %</p>
             <button class="btn-start" onclick="location.reload()">再玩一次</button>
         </div>
     </div>
@@ -196,20 +188,29 @@
             }
         }
 
-        function formatBopomofo(str) {
+        // ✅ 核心修正：手動拆解注音並排列
+        function renderBopomofo(str) {
             const tones = ["ˊ", "ˇ", "ˋ", "˙"];
-            let main = str;
-            let tone = "";
-            tones.forEach(t => {
-                if(str.includes(t)) {
-                    main = str.replace(t, "");
-                    tone = t;
+            let mainSymbols = "";
+            let toneMark = "";
+            
+            // 分離聲調
+            for(let char of str) {
+                if(tones.includes(char)) {
+                    toneMark = char;
+                } else {
+                    mainSymbols += `<div class="symbol">${char}</div>`;
                 }
-            });
-            if(tone === "˙") {
-                return `<div class="bopomofo-vertical"><span class="soft-tone">˙</span>${main}</div>`;
             }
-            return `<div class="bopomofo-vertical">${main}</div><div class="tone">${tone}</div>`;
+
+            // 組合 HTML
+            let html = mainSymbols;
+            if(toneMark === "˙") {
+                html = `<div class="dot-mark">˙</div>` + html; // 輕聲在頭
+            } else if(toneMark !== "") {
+                html += `<div class="tone-mark">${toneMark}</div>`; // 其他聲調在側
+            }
+            return html;
         }
 
         function startGame() {
@@ -233,13 +234,12 @@
             document.getElementById('q-count').innerText = `進度：${currentIdx + 1} / 30`;
             const data = quizData[currentIdx];
             document.getElementById('q-text').innerText = data.q;
-            
             let opts = [...data.o];
             shuffle(opts);
             
-            document.getElementById('opt0').innerHTML = formatBopomofo(opts[0]);
+            document.getElementById('opt0').innerHTML = renderBopomofo(opts[0]);
             document.getElementById('opt0').dataset.val = opts[0];
-            document.getElementById('opt1').innerHTML = formatBopomofo(opts[1]);
+            document.getElementById('opt1').innerHTML = renderBopomofo(opts[1]);
             document.getElementById('opt1').dataset.val = opts[1];
             
             document.getElementById('opt0').className = 'opt-btn';
@@ -249,7 +249,6 @@
         function checkAnswer(idx) {
             const chosen = document.getElementById('opt' + idx).dataset.val;
             const correctAns = quizData[currentIdx].a;
-            
             if(chosen === correctAns) {
                 score.correct++;
                 document.getElementById('snd-right').play();
@@ -259,7 +258,6 @@
                 document.getElementById('snd-wrong').play();
                 document.getElementById('opt' + idx).classList.add('wrong');
             }
-
             setTimeout(() => {
                 currentIdx++;
                 showQuestion();
