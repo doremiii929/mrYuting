@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>輪轉時鐘</title>
+    <style>
+        @font-face {
+            font-family: 'DFKai-SB';
+            src: local('DFKai-SB'), local('BiauKai'), local('標楷體');
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body, html {
+            margin: 0; padding: 0; height: 100%;
+            font-family: 'DFKai-SB', '標楷體', serif;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* 🌸 背景圖設定 */
+        .bg-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('math-bg.png') no-repeat center center;
+            background-size: cover;
+            z-index: -2;
+        }
+
+        /* 中央大控制面板 */
+        .game-panel {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 95%; max-width: 650px;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            text-align: center;
+            border: 6px solid rgba(255, 255, 255, 0.8);
+            z-index: 10;
+        }
+
+        /* 標題圖片 */
+        .title-img { width: 90%; max-width: 450px; margin-bottom: 20px; }
+
+        .time-select-title { font-size: 26px; color: #111; margin-top: 15px; font-weight: bold; }
+        .mode-container { display: flex; justify-content: center; gap: 25px; margin: 20px 0; }
+        
+        .radio-btn {
+            background: white; border: 3px solid #57c1ec; padding: 15px 35px;
+            font-size: 24px; border-radius: 25px; cursor: pointer; font-weight: bold;
+        }
+        .radio-btn.selected { background: #57c1ec; color: white; }
+
+        .btn-action {
+            background: #ffb7b2; color: #333; border: none;
+            padding: 15px 50px; font-size: 32px; border-radius: 40px;
+            cursor: pointer; margin-top: 20px; box-shadow: 0 6px 0 #e5a4a0;
+            font-weight: bold; font-family: 'DFKai-SB';
+        }
+
+        /* 遊戲主畫面 */
+        #start-screen, #game-area, #result-area { display: none; }
+        #start-screen { display: block; }
+
+        .timer-bar { font-size: 36px; color: #ff4757; font-weight: bold; margin-bottom: 10px; }
+        .info-bar { font-size: 24px; color: #444; margin-bottom: 10px; font-weight: bold; }
+        
+        /* 題目顯示大字 */
+        .question-display { 
+            font-size: 65px; color: #000; font-weight: bold; 
+            background: rgba(255,255,255,0.9); padding: 10px 25px; 
+            border-radius: 20px; display: inline-block; margin-bottom: 15px;
+            border: 3px dashed #57c1ec;
+        }
+
+        /* 🌸 核心時鐘外圈 (放大至 360px) */
+        .clock-wrapper {
+            position: relative; width: 360px; height: 360px;
+            margin: 10px auto; touch-action: none;
+        }
+
+        .clock-face {
+            width: 100%; height: 100%;
+            border: 10px solid #1a5f7a; background: white;
+            border-radius: 50%; position: relative;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        /* 🌸 修正：精準的時鐘刻度線定位（完全貼在外圈，絕不往核心交織） */
+        .tick {
+            position: absolute;
+            top: 0; left: 50%;
+            transform-origin: center 170px; /* 360px扣除兩側10px邊框後的圓心高度 */
+        }
+        /* 小格（分鐘刻度）：細、短，緊貼外邊緣 */
+        .tick-min { 
+            width: 3px; height: 12px; 
+            margin-left: -1.5px; 
+            background: #888; 
+        }
+        /* 大格（整點刻度）：粗、長，方便辨識 */
+        .tick-hour { 
+            width: 6px; height: 22px; 
+            margin-left: -3px; 
+            background: #1a5f7a; 
+        }
+
+        /* 時鐘中心點軸心 */
+        .clock-center {
+            position: absolute; width: 22px; height: 22px; background: #333;
+            border-radius: 50%; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); z-index: 10;
+        }
+
+        /* 鐘面數字加大與對齊優化 */
+        .clock-number {
+            position: absolute; width: 45px; height: 45px;
+            font-size: 34px; font-weight: bold; color: #222;
+            text-align: center; line-height: 45px;
+        }
+
+        /* 指針外觀設計 */
+        .hand {
+            position: absolute; bottom: 50%; left: 50%;
+            transform-origin: bottom center; border-radius: 12px;
+            cursor: pointer;
+        }
+        
+        /* 短針 (時針) - 紅色 */
+        .hour-hand {
+            width: 12px; height: 85px; background: #ff4757;
+            z-index: 5; margin-left: -6px;
+        }
+        /* 加大觸控感應區 */
+        .hour-hand::after {
+            content: ''; position: absolute; top: -20px; left: -15px; width: 42px; height: 120px;
+        }
+
+        /* 長針 (分針) - 藍色 */
+        .minute-hand {
+            width: 8px; height: 130px; background: #1e90ff;
+            z-index: 6; margin-left: -4px;
+        }
+        .minute-hand::after {
+            content: ''; position: absolute; top: -20px; left: -15px; width: 38px; height: 160px;
+        }
+
+        /* 🌸 超巨大純圖形勾叉（蓋在時鐘正中央） */
+        #feedback-overlay {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 8;
+            font-size: 200px;
+            font-weight: bold;
+            line-height: 1;
+            pointer-events: none;
+        }
+        .feedback-correct { color: rgba(46, 213, 115, 0.9); animation: pop 0.4s ease; }
+        .feedback-wrong { color: rgba(255, 71, 87, 0.9); animation: pop 0.4s ease; }
+
+        @keyframes pop {
+            0% { transform: translate(-50%, -50%) scale(0); }
+            80% { transform: translate(-50%, -50%) scale(1.2); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+
+        /* 完成按鈕 */
+        .btn-submit {
+            background: #ff4757; color: white; border: none;
+            padding: 15px 60px; font-size: 32px; border-radius: 40px;
+            cursor: pointer; margin-top: 20px; box-shadow: 0 6px 0 #b3323b;
+            font-weight: bold; font-family: 'DFKai-SB';
+        }
+        .btn-submit:active { transform: translateY(3px); box-shadow: 0 3px 0 #b3323b; }
+
+        .score-box { font-size: 32px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+    <div class="bg-container"></div>
+
+    <div class="game-panel">
+        <div id="start-screen">
+            <img src="math-title.png" alt="輪轉時鐘" class="title-img">
+            
+            <div class="input-group">
+                <input type="text" id="player-name" placeholder="請輸入名字開始玩" style="padding:15px; font-size:26px; border-radius:20px; border:3px solid #57c1ec; width:80%; text-align:center;">
+            </div>
+            
+            <div class="time-select-title">⏱️ 請選擇每題挑戰時間：</div>
+            <div class="mode-container">
+                <div class="radio-btn selected" id="time-40" onclick="selectTime(40)">40 秒模式</div>
+                <div class="radio-btn" id="time-30" onclick="selectTime(30)">30 秒模式</div>
+            </div>
+            
+            <button class="btn-action" onclick="startGame()">開始挑戰 ➔</button>
+        </div>
+
+        <div id="game-area">
+            <div class="timer-bar">⏱️ 倒數：<span id="time-left">40</span> 秒</div>
+            <div class="info-bar" id="progress-text">第 1 / 10 題</div>
+            
+            <div class="question-display" id="target-time-text">12 時 00 分</div>
+            
+            <div class="clock-wrapper" id="clock-container">
+                <div class="clock-face" id="clock-face">
+                    <div id="feedback-overlay"></div>
+
+                    <div class="clock-center"></div>
+                    <div class="hand hour-hand" id="hour-hand"></div>
+                    <div class="hand minute-hand" id="minute-hand"></div>
+                </div>
+            </div>
+            
+            <button class="btn-submit" onclick="submitAnswer()">完成確認</button>
+        </div>
+
+        <div id="result-area">
+            <h2 style="font-size:45px; color:#1a5f7a; margin-top:10px;">挑戰結束！</h2>
+            <p style="font-size:28px;"><span id="display-name" style="font-weight:bold; color:#ff4757;"></span> 同學的成績：</p>
+            <hr style="border:2px dashed #57c1ec">
+            <div class="score-box" style="color:#2ed573; font-weight:bold;">⭕ 答對：<span id="res-correct" style="font-size:40px;">0</span> 題</div>
+            <div class="score-box" style="color:#ff4757; font-weight:bold;">❌ 答錯：<span id="res-wrong" style="font-size:40px;">0</span> 題</div>
+            <button class="btn-action" onclick="location.reload()">再玩一次</button>
+        </div>
+    </div>
+
+    <script>
+        let playerName = "";
+        let limitTimePerQuestion = 40;
+        let currentQuestionIndex = 0;
+        let score = { correct: 0, wrong: 0 };
+        let timeLeft = 40;
+        let timerInterval;
+        
+        let targetHour = 12;
+        let targetMinute = 0;
+        let currentHourAngle = 0;   
+        let currentMinuteAngle = 0; 
+        let isDragging = null;      
+
+        // 🌸 重新修正：刻度線與數字生成演算法（完美貼齊外圈，絕不重疊）
+        function initClockTicksAndNumbers() {
+            const face = document.getElementById('clock-face');
+            
+            // 清空舊刻度避免重複生成
+            const oldTicks = face.querySelectorAll('.tick, .clock-number');
+            oldTicks.forEach(el => el.remove());
+
+            // 1. 生成 60 個標準外圍格子
+            for (let i = 0; i < 60; i++) {
+                const tickDiv = document.createElement('div');
+                if (i % 5 === 0) {
+                    tickDiv.className = 'tick tick-hour';
+                } else {
+                    tickDiv.className = 'tick tick-min';
+                }
+                tickDiv.style.transform = `rotate(${i * 6}deg)`;
+                face.appendChild(tickDiv);
+            }
+
+            // 2. 生成 12 個內側整點數字
+            const radius = 125; // 微調半徑，確保數字在格子內側且不重合
+            for (let i = 1; i <= 12; i++) {
+                const numDiv = document.createElement('div');
+                numDiv.className = 'clock-number';
+                numDiv.innerText = i;
+                const angle = (i * 30) * Math.PI / 180;
+                // 圓心移至 170px (即 340px 鐘面的幾何核心)
+                const x = 170 + radius * Math.sin(angle) - 22.5; 
+                const y = 170 - radius * Math.cos(angle) - 22.5;
+                numDiv.style.left = x + 'px';
+                numDiv.style.top = y + 'px';
+                face.appendChild(numDiv);
+            }
+        }
+
+        function selectTime(seconds) {
+            limitTimePerQuestion = seconds;
+            document.getElementById('time-40').classList.toggle('selected', seconds === 40);
+            document.getElementById('time-30').classList.toggle('selected', seconds === 30);
+        }
+
+        function startGame() {
+            playerName = document.getElementById('player-name').value.trim();
+            if (!playerName) { alert("請輸入您的姓名喔！"); return; }
+            
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('game-area').style.display = 'block';
+            
+            initClockTicksAndNumbers();
+            setupPointerEvents(); 
+            generateQuestion();
+        }
+
+        function generateQuestion() {
+            if (currentQuestionIndex >= 10) { endGame(); return; }
+            
+            document.getElementById('progress-text').innerText = `第 ${currentQuestionIndex + 1} / 10 題`;
+            document.getElementById('feedback-overlay').innerHTML = ""; 
+            
+            targetHour = Math.floor(Math.random() * 12) + 1;
+            targetMinute = Math.floor(Math.random() * 60);
+            
+            let minStr = targetMinute < 10 ? '0' + targetMinute : targetMinute;
+            document.getElementById('target-time-text').innerText = `${targetHour} 時 ${minStr} 分`;
+            
+            // 初始化指針角度
+            setHandAngles(0, 0); 
+
+            timeLeft = limitTimePerQuestion;
+            document.getElementById('time-left').innerText = timeLeft;
+            clearInterval(timerInterval);
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('time-left').innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    showFeedback(false);
+                    score.wrong++;
+                    nextQuestionDelay();
+                }
+            }, 1000);
+        }
+
+        function setHandAngles(hAngle, mAngle) {
+            currentHourAngle = hAngle;
+            currentMinuteAngle = mAngle;
+            document.getElementById('hour-hand').style.transform = `rotate(${hAngle}deg)`;
+            document.getElementById('minute-hand').style.transform = `rotate(${mAngle}deg)`;
+        }
+
+        function submitAnswer() {
+            clearInterval(timerInterval);
+
+            let calculatedMinute = Math.round(currentMinuteAngle / 6) % 60;
+            if (calculatedMinute < 0) calculatedMinute += 60;
+
+            let calculatedHour = Math.floor(currentHourAngle / 30) % 12;
+            if (calculatedHour <= 0) calculatedHour += 12;
+
+            let isCorrect = (calculatedHour === targetHour) && (calculatedMinute === targetMinute);
+
+            if (isCorrect) {
+                score.correct++;
+                showFeedback(true);
+            } else {
+                score.wrong++;
+                showFeedback(false);
+            }
+
+            nextQuestionDelay();
+        }
+
+        function showFeedback(isCorrect) {
+            const fBox = document.getElementById('feedback-overlay');
+            if (isCorrect) {
+                fBox.innerHTML = '<span class="feedback-correct">O</span>'; 
+            } else {
+                fBox.innerHTML = '<span class="feedback-wrong">X</span>'; 
+            }
+        }
+
+        function nextQuestionDelay() {
+            currentQuestionIndex++;
+            setTimeout(() => {
+                generateQuestion();
+            }, 1500);
+        }
+
+        function endGame() {
+            clearInterval(timerInterval);
+            document.getElementById('game-area').style.display = 'none';
+            document.getElementById('result-area').style.display = 'block';
+            
+            document.getElementById('display-name').innerText = playerName;
+            document.getElementById('res-correct').innerText = score.correct;
+            document.getElementById('res-wrong').innerText = score.wrong;
+        }
+
+        // 手機拖曳旋轉偵測演算法
+        function setupPointerEvents() {
+            const container = document.getElementById('clock-container');
+            
+            container.addEventListener('pointerdown', (e) => {
+                if (e.target.classList.contains('hour-hand')) {
+                    isDragging = 'hour';
+                    container.setPointerCapture(e.pointerId);
+                } else if (e.target.classList.contains('minute-hand')) {
+                    isDragging = 'minute';
+                    container.setPointerCapture(e.pointerId);
+                } else {
+                    const angle = getAngleFromEvent(e);
+                    const diffHour = Math.abs(angle - (currentHourAngle % 360));
+                    const diffMin = Math.abs(angle - (currentMinuteAngle % 360));
+                    isDragging = (diffHour < diffMin) ? 'hour' : 'minute';
+                    container.setPointerCapture(e.pointerId);
+                    updateHandRotation(angle);
+                }
+            });
+
+            container.addEventListener('pointermove', (e) => {
+                if (!isDragging) return;
+                const angle = getAngleFromEvent(e);
+                updateHandRotation(angle);
+            });
+
+            const stopDrag = (e) => {
+                if (isDragging) {
+                    container.releasePointerCapture(e.pointerId);
+                    isDragging = null;
+                }
+            };
+            container.addEventListener('pointerup', stopDrag);
+            container.addEventListener('pointercancel', stopDrag);
+        }
+
+        function getAngleFromEvent(e) {
+            const container = document.getElementById('clock-container');
+            const rect = container.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const dx = e.clientX - centerX;
+            const dy = e.clientY - centerY;
+            let angle = Math.atan2(dx, -dy) * (180 / Math.PI);
+            if (angle < 0) angle += 360;
+            return angle;
+        }
+
+        function updateHandRotation(angle) {
+            if (isDragging === 'minute') {
+                let stepAngle = Math.round(angle / 6) * 6; // 分針格線吸附
+                currentMinuteAngle = stepAngle;
+                document.getElementById('minute-hand').style.transform = `rotate(${stepAngle}deg)`;
+            } else if (isDragging === 'hour') {
+                let stepAngle = Math.round(angle / 2.5) * 2.5; 
+                currentHourAngle = stepAngle;
+                document.getElementById('hour-hand').style.transform = `rotate(${stepAngle}deg)`;
+            }
+        }
+    </script>
+</body>
+</html>
