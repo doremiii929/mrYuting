@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>史努比國語小學霸·AI知識挑戰賽</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #fef9c3; /* 史努比花生黃 */
+            background-image: radial-gradient(#fde047 1.5px, transparent 1.5px);
+            background-size: 24px 24px;
+        }
+
+        /* 史努比漫畫手繪風格框線 */
+        .peanuts-card {
+            background-color: #ffffff;
+            border: 3.5px solid #000000;
+            box-shadow: 6px 6px 0px #000000;
+            border-radius: 16px;
+        }
+
+        .peanuts-btn {
+            border: 3px solid #000000;
+            box-shadow: 4px 4px 0px #000000;
+            transition: all 0.1s ease;
+            font-weight: 900;
+        }
+
+        .peanuts-btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0px #000000;
+        }
+
+        .peanuts-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0px #000000;
+        }
+
+        /* 查理布朗鋸齒衣服圖案 */
+        .zigzag-border {
+            background: linear-gradient(135deg, #000 25%, transparent 25%) -20px 0,
+                        linear-gradient(225deg, #000 25%, transparent 25%) -20px 0,
+                        linear-gradient(315deg, #000 25%, transparent 25%),
+                        linear-gradient(45deg, #000 25%, transparent 25%);
+            background-size: 40px 40px;
+            background-color: #eab308;
+            height: 20px;
+        }
+
+        .matching-btn.selected {
+            background-color: #fef08a;
+            border-color: #000000;
+            box-shadow: 3px 3px 0px #000000;
+        }
+
+        .matching-btn.matched {
+            background-color: #bbf7d0;
+            border-color: #000000;
+            color: #166534;
+            cursor: default;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-16">
+
+    <!-- 頂部鋸齒圖案 -->
+    <div class="zigzag-border border-b-4 border-black"></div>
+
+    <!-- 標題欄 -->
+    <header class="bg-amber-400 border-b-4 border-black py-4 px-4 sticky top-0 z-40">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <span class="text-4xl">🐶</span>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-black text-black tracking-wider">SNOOPY 國語大冒險</h1>
+                    <p class="text-xs font-bold text-black/80">「一般」句型與「轉」多音字特訓</p>
+                </div>
+            </div>
+            
+            <!-- 目前登入學生狀態 -->
+            <div id="user-badge" class="hidden flex items-center gap-2 bg-white px-3 py-1.5 border-2 border-black rounded-xl shadow-[2px_2px_0px_#000]">
+                <span id="current-avatar" class="text-xl">🐶</span>
+                <div class="text-xs">
+                    <div id="current-user-info" class="font-black text-black">未登入</div>
+                    <div class="text-[10px] text-slate-600 font-bold">最高分：<span id="current-user-highscore" class="text-red-600 font-black">0</span></div>
+                </div>
+                <button onclick="logout()" class="ml-2 text-xs text-slate-400 hover:text-black"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 mt-6 space-y-6">
+
+        <!-- 0. 學生資料登入卡片（初始顯示） -->
+        <section id="login-card" class="peanuts-card p-6 md:p-8 text-center space-y-6">
+            <div class="space-y-2">
+                <div class="text-5xl animate-bounce">🏠🐶</div>
+                <h2 class="text-2xl font-black text-black">歡迎來到 Snoopy 國語小學霸！</h2>
+                <p class="text-xs md:text-sm font-bold text-slate-600">請先輸入你的班級、座號與姓名，開啟挑戰並登上榮譽榜吧！</p>
+            </div>
+
+            <form onsubmit="handleLogin(event)" class="max-w-md mx-auto space-y-4 text-left">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-black text-black mb-1">🏫 班級</label>
+                        <input type="text" id="input-class" placeholder="例：三年一班" required class="w-full p-2.5 border-2 border-black rounded-xl text-sm font-bold focus:bg-yellow-50 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-black mb-1">🔢 座號</label>
+                        <input type="number" id="input-number" placeholder="例：8" min="1" max="99" required class="w-full p-2.5 border-2 border-black rounded-xl text-sm font-bold focus:bg-yellow-50 outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-black text-black mb-1">✏️ 學生姓名</label>
+                    <input type="text" id="input-name" placeholder="請輸入姓名" required class="w-full p-2.5 border-2 border-black rounded-xl text-sm font-bold focus:bg-yellow-50 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-black text-black mb-1">🐾 選擇你的吉祥物夥伴</label>
+                    <div class="grid grid-cols-4 gap-2">
+                        <button type="button" onclick="selectAvatar('🐶')" class="avatar-btn p-2 border-2 border-black rounded-xl text-2xl bg-yellow-100 hover:bg-yellow-200 text-center">🐶</button>
+                        <button type="button" onclick="selectAvatar('🐤')" class="avatar-btn p-2 border-2 border-black rounded-xl text-2xl bg-white hover:bg-yellow-200 text-center">🐤</button>
+                        <button type="button" onclick="selectAvatar('👦')" class="avatar-btn p-2 border-2 border-black rounded-xl text-2xl bg-white hover:bg-yellow-200 text-center">👦</button>
+                        <button type="button" onclick="selectAvatar('👧')" class="avatar-btn p-2 border-2 border-black rounded-xl text-2xl bg-white hover:bg-yellow-200 text-center">👧</button>
+                    </div>
+                </div>
+
+                <button type="submit" class="peanuts-btn w-full py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl text-base tracking-wider mt-2">
+                    🚀 開始進入國語冒險！
+                </button>
+            </form>
+        </section>
+
+        <!-- 主學習內容與挑戰區域（登入後顯示） -->
+        <div id="main-content" class="hidden space-y-6">
+
+            <!-- 模式切換頁籤 -->
+            <div class="flex gap-3">
+                <button onclick="switchTab('practice')" id="tab-practice" class="peanuts-btn flex-1 py-2.5 bg-yellow-400 text-black rounded-xl text-xs md:text-sm">
+                    📚 重點速記與基礎特訓
+                </button>
+                <button onclick="switchTab('ai-challenge')" id="tab-ai" class="peanuts-btn flex-1 py-2.5 bg-white text-black rounded-xl text-xs md:text-sm">
+                    ⚡ AI 限時知識挑戰賽
+                </button>
+                <button onclick="switchTab('leaderboard')" id="tab-leaderboard" class="peanuts-btn flex-1 py-2.5 bg-white text-black rounded-xl text-xs md:text-sm">
+                    🏆 學生英雄榮譽榜
+                </button>
+            </div>
+
+            <!-- 1. 精簡觀念重點區 -->
+            <section id="section-practice" class="space-y-6">
+                <div class="peanuts-card p-5">
+                    <h2 class="text-base font-black text-black mb-3 flex items-center gap-2 border-b-2 border-black pb-2">
+                        <span>💡 史努比筆記：重點密技速記</span>
+                    </h2>
+
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="bg-amber-100/80 p-3.5 rounded-xl border-2 border-black text-xs space-y-1.5">
+                            <div class="font-black text-black">📌 句型觀念：「一般」</div>
+                            <p><b>1. 像……一樣 (比喻)：</b>笑聲像鈴聲<b>一般</b>清脆。</p>
+                            <p><b>2. 普通/習慣：</b>繪畫很<b>一般</b>、<b>一般</b>會去圖書館。</p>
+                        </div>
+                        <div class="bg-sky-100/80 p-3.5 rounded-xl border-2 border-black text-xs space-y-1.5">
+                            <div class="font-black text-black">📌 多音字觀念：「轉」</div>
+                            <p><b>1. ㄓㄨㄢˇ（三聲/改變）：</b>轉彎、轉身、轉學。</p>
+                            <p><b>2. ㄓㄨㄢˋ（四聲/旋轉）：</b>旋轉、轉圈、公轉。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 基礎題關卡區 -->
+                <div class="peanuts-card p-5 md:p-6">
+                    <div class="flex items-center justify-between border-b-2 border-black pb-3 mb-4">
+                        <h3 class="text-base font-black text-black">🎮 經典練習關卡</h3>
+                        <span id="quiz-progress" class="text-xs font-black bg-yellow-300 border-2 border-black px-2.5 py-0.5 rounded-lg">關卡 1 / 10</span>
+                    </div>
+
+                    <div id="quiz-container"></div>
+                    <div id="feedback-box" class="hidden mt-4 p-3 rounded-xl text-xs font-bold border-2 border-black"></div>
+
+                    <div class="mt-4 flex justify-end">
+                        <button id="next-btn" onclick="nextQuestion()" class="hidden peanuts-btn px-4 py-2 bg-indigo-500 text-white rounded-xl text-xs">
+                            下一關 <i class="fas fa-arrow-right ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. AI 動態挑戰賽區 -->
+            <section id="section-ai" class="hidden peanuts-card p-6 text-center space-y-6">
+                <div class="space-y-2 border-b-2 border-black pb-4">
+                    <div class="text-4xl">⚡🐶</div>
+                    <h2 class="text-xl font-black">AI 知識挑戰賽 (無限題目生成)</h2>
+                    <p class="text-xs font-bold text-slate-600">由 AI 智慧出題！每題有 15 秒回答時間，答對越快分數越高！</p>
+                </div>
+
+                <div id="ai-quiz-start-box" class="py-4 space-y-4">
+                    <div class="bg-yellow-100 p-4 rounded-xl border-2 border-black max-w-sm mx-auto text-left text-xs space-y-1 font-bold">
+                        <div>🎯 挑戰規則：</div>
+                        <div>1. 每回合隨機抽考 5 道 AI 題目。</div>
+                        <div>2. 倒數計時結束未作答視同答錯。</div>
+                        <div>3. 分數將直接更新至【學生英雄榮譽榜】！</div>
+                    </div>
+                    <button onclick="startAiChallenge()" class="peanuts-btn px-8 py-3 bg-red-500 text-white text-base rounded-xl">
+                        🚀 開始挑戰 AI 題目！
+                    </button>
+                </div>
+
+                <!-- AI 答題介面 -->
+                <div id="ai-quiz-play-box" class="hidden space-y-4 text-left">
+                    <div class="flex items-center justify-between text-xs font-black">
+                        <span>目前分數：<span id="ai-score" class="text-red-600 text-sm">0</span></span>
+                        <span>剩餘時間：<span id="ai-timer-text" class="text-red-600 text-sm">15</span>s</span>
+                    </div>
+
+                    <!-- 時間倒數條 -->
+                    <div class="w-full bg-slate-200 border-2 border-black h-3 rounded-full overflow-hidden">
+                        <div id="ai-timer-bar" class="bg-red-500 h-full w-full transition-all duration-1000 linear"></div>
+                    </div>
+
+                    <div id="ai-question-card" class="bg-slate-50 p-4 border-2 border-black rounded-xl space-y-3">
+                        <div id="ai-q-title" class="text-sm font-black text-black">題目載入中...</div>
+                        <div id="ai-options" class="grid gap-2"></div>
+                    </div>
+
+                    <div id="ai-feedback" class="hidden p-3 rounded-xl border-2 border-black text-xs font-bold"></div>
+                </div>
+            </section>
+
+            <!-- 3. 學生英雄榮譽榜 (Leaderboard) -->
+            <section id="section-leaderboard" class="hidden peanuts-card p-6 space-y-6">
+                <div class="text-center space-y-1 border-b-2 border-black pb-4">
+                    <div class="text-4xl">🏆🐶</div>
+                    <h2 class="text-xl font-black">史努比英雄榮譽榜</h2>
+                    <p class="text-xs font-bold text-slate-600">看看誰是班上的國語小學霸！</p>
+                </div>
+
+                <!-- 前三名獎牌台 -->
+                <div id="top-three-podium" class="grid grid-cols-3 gap-2 pt-2 items-end">
+                    <!-- JavaScript 動態渲染前三名 -->
+                </div>
+
+                <!-- 完整排名列表 -->
+                <div class="border-2 border-black rounded-xl overflow-hidden bg-white">
+                    <table class="w-full text-left border-collapse text-xs md:text-sm">
+                        <thead class="bg-yellow-300 border-b-2 border-black font-black">
+                            <tr>
+                                <th class="p-2.5">名次</th>
+                                <th class="p-2.5">學生</th>
+                                <th class="p-2.5">班級座號</th>
+                                <th class="p-2.5 text-right">最高挑戰積分</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-body" class="divide-y-2 divide-black font-bold">
+                            <!-- 排名行 -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </div>
+
+    </main>
+
+    <script>
+        // ----------------------------------------------------
+        // 1. 學生登入與排行榜資料管理
+        // ----------------------------------------------------
+        let currentUser = null;
+        let selectedAvatar = '🐶';
+
+        function selectAvatar(emoji) {
+            selectedAvatar = emoji;
+            document.querySelectorAll('.avatar-btn').forEach(btn => {
+                if (btn.innerText.includes(emoji)) {
+                    btn.classList.add('bg-yellow-200', 'border-black');
+                } else {
+                    btn.classList.remove('bg-yellow-200');
+                }
+            });
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const cls = document.getElementById('input-class').value.trim();
+            const num = document.getElementById('input-number').value.trim();
+            const name = document.getElementById('input-name').value.trim();
+
+            if (!cls || !num || !name) return;
+
+            currentUser = {
+                id: `${cls}-${num}-${name}`,
+                class: cls,
+                number: num,
+                name: name,
+                avatar: selectedAvatar,
+                score: 0
+            };
+
+            // 讀取該學生個人最高分
+            const leaderboard = getLeaderboard();
+            const existing = leaderboard.find(u => u.id === currentUser.id);
+            if (existing) {
+                currentUser.score = existing.score;
+            }
+
+            updateUserBadge();
+            document.getElementById('login-card').classList.add('hidden');
+            document.getElementById('main-content').classList.remove('hidden');
+            renderLeaderboard();
+            renderQuestion();
+        }
+
+        function updateUserBadge() {
+            document.getElementById('user-badge').classList.remove('hidden');
+            document.getElementById('current-avatar').innerText = currentUser.avatar;
+            document.getElementById('current-user-info').innerText = `${currentUser.class} ${currentUser.number}號 ${currentUser.name}`;
+            document.getElementById('current-user-highscore').innerText = currentUser.score;
+        }
+
+        function logout() {
+            currentUser = null;
+            document.getElementById('user-badge').classList.add('hidden');
+            document.getElementById('login-card').classList.remove('hidden');
+            document.getElementById('main-content').classList.add('hidden');
+        }
+
+        function getLeaderboard() {
+            const data = localStorage.getItem('snoopy_mandarin_leaderboard');
+            return data ? JSON.parse(data) : [
+                { id: "301-1-查理布朗", class: "三年一班", number: "1", name: "查理布朗", avatar: "👦", score: 80 },
+                { id: "301-2-露西", class: "三年一班", number: "2", name: "露西", avatar: "👧", score: 90 },
+                { id: "301-3-糊塗塌客", class: "三年一班", number: "3", name: "糊塗塌客", avatar: "🐤", score: 60 }
+            ];
+        }
+
+        function updateScore(newScore) {
+            if (newScore > currentUser.score) {
+                currentUser.score = newScore;
+                let leaderboard = getLeaderboard();
+                const index = leaderboard.findIndex(u => u.id === currentUser.id);
+                if (index !== -1) {
+                    leaderboard[index] = currentUser;
+                } else {
+                    leaderboard.push(currentUser);
+                }
+                localStorage.setItem('snoopy_mandarin_leaderboard', JSON.stringify(leaderboard));
+                updateUserBadge();
+                renderLeaderboard();
+            }
+        }
+
+        function renderLeaderboard() {
+            const leaderboard = getLeaderboard().sort((a, b) => b.score - a.score);
+            const tbody = document.getElementById('leaderboard-body');
+            const podium = document.getElementById('top-three-podium');
+
+            tbody.innerHTML = '';
+            podium.innerHTML = '';
+
+            // 渲染列表
+            leaderboard.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.className = index % 2 === 0 ? 'bg-white' : 'bg-yellow-50';
+                tr.innerHTML = `
+                    <td class="p-2.5 font-black">${index === 0 ? '🥇 1' : index === 1 ? '🥈 2' : index === 2 ? '🥉 3' : index + 1}</td>
+                    <td class="p-2.5 font-black flex items-center gap-1.5">${item.avatar} ${item.name}</td>
+                    <td class="p-2.5 text-slate-600">${item.class} ${item.number}號</td>
+                    <td class="p-2.5 text-right font-black text-red-600">${item.score} 分</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // 渲染前三名獎牌台
+            const top3 = [leaderboard[1], leaderboard[0], leaderboard[2]]; // 銀, 金, 銅順序
+            const podiumStyles = [
+                { title: "🥈 亞軍", bg: "bg-slate-200", height: "h-24" },
+                { title: "🥇 冠軍", bg: "bg-yellow-300", height: "h-32" },
+                { title: "🥉 季軍", bg: "bg-amber-200", height: "h-20" }
+            ];
+
+            top3.forEach((item, idx) => {
+                if (item) {
+                    const style = podiumStyles[idx];
+                    podium.innerHTML += `
+                        <div class="text-center space-y-1">
+                            <div class="text-xs font-black">${item.avatar} ${item.name}</div>
+                            <div class="${style.bg} ${style.height} border-2 border-black rounded-t-xl flex flex-col justify-center items-center">
+                                <span class="text-xs font-black">${style.title}</span>
+                                <span class="text-xs font-bold text-red-600">${item.score}分</span>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        // ----------------------------------------------------
+        // 2. 頁籤切換
+        // ----------------------------------------------------
+        function switchTab(tab) {
+            document.getElementById('section-practice').classList.add('hidden');
+            document.getElementById('section-ai').classList.add('hidden');
+            document.getElementById('section-leaderboard').classList.add('hidden');
+
+            document.getElementById('tab-practice').className = "peanuts-btn flex-1 py-2.5 bg-white text-black rounded-xl text-xs md:text-sm";
+            document.getElementById('tab-ai').className = "peanuts-btn flex-1 py-2.5 bg-white text-black rounded-xl text-xs md:text-sm";
+            document.getElementById('tab-leaderboard').className = "peanuts-btn flex-1 py-2.5 bg-white text-black rounded-xl text-xs md:text-sm";
+
+            if (tab === 'practice') {
+                document.getElementById('section-practice').classList.remove('hidden');
+                document.getElementById('tab-practice').className = "peanuts-btn flex-1 py-2.5 bg-yellow-400 text-black rounded-xl text-xs md:text-sm";
+            } else if (tab === 'ai-challenge') {
+                document.getElementById('section-ai').classList.remove('hidden');
+                document.getElementById('tab-ai').className = "peanuts-btn flex-1 py-2.5 bg-yellow-400 text-black rounded-xl text-xs md:text-sm";
+            } else {
+                document.getElementById('section-leaderboard').classList.remove('hidden');
+                document.getElementById('tab-leaderboard').className = "peanuts-btn flex-1 py-2.5 bg-yellow-400 text-black rounded-xl text-xs md:text-sm";
+            }
+        }
+
+        // ----------------------------------------------------
+        // 3. 基礎練習題庫與渲染
+        // ----------------------------------------------------
+        const practiceQuestions = [
+            {
+                type: "choice",
+                title: "1. 句型辨析題",
+                question: "「弟弟跑得非常快，就像獵豹【一般】。」句中的【一般】是什麼意思？",
+                options: [
+                    { text: "A. 比喻修辭，意思是「像……一樣」", correct: true },
+                    { text: "B. 表現普通，沒有特別突出", correct: false },
+                    { text: "C. 代表日常習慣或通常情況", correct: false },
+                    { text: "D. 數量很少的意思", correct: false }
+                ],
+                explain: "答對了！這句將弟弟的比喻成獵豹，屬於「像……一樣」的比喻用法。"
+            },
+            {
+                type: "choice",
+                title: "2. 多音字：方向判定",
+                question: "「走到路的盡頭請向右【轉】。」句中的【轉】字應該讀哪一個音？",
+                options: [
+                    { text: "A. ㄓㄨㄢˇ（三聲）", correct: true },
+                    { text: "B. ㄓㄨㄢˋ（四聲）", correct: false },
+                    { text: "C. ㄓㄨㄢ（一聲）", correct: false }
+                ],
+                explain: "正確！「向右轉」是改變移動方向，讀三聲 ㄓㄨㄢˇ。"
+            },
+            {
+                type: "matching",
+                title: "3. 互動配對題：讀音連連看",
+                instructions: "點擊左邊語詞，再點擊右邊對應的讀音：",
+                leftItems: [
+                    { id: "l1", text: "車子「轉彎」", target: "ㄓㄨㄢˇ" },
+                    { id: "l2", text: "陀螺「轉圈」", target: "ㄓㄨㄢˋ" }
+                ],
+                rightItems: ["ㄓㄨㄢˇ", "ㄓㄨㄢˋ"],
+                explain: "讚喔！轉彎是改變方向（三聲），轉圈是旋轉（四聲）。"
+            }
+        ];
+
+        let currentIndex = 0;
+        let practiceScore = 0;
+        let selectedLeft = null;
+        let matchedCount = 0;
+
+        function renderQuestion() {
+            const container = document.getElementById('quiz-container');
+            const feedback = document.getElementById('feedback-box');
+            const nextBtn = document.getElementById('next-btn');
+            const q = practiceQuestions[currentIndex];
+
+            feedback.className = "hidden";
+            nextBtn.className = "hidden";
+            document.getElementById('quiz-progress').innerText = `關卡 ${currentIndex + 1} / ${practiceQuestions.length}`;
+
+            if (q.type === 'choice') {
+                let optionsHtml = '';
+                q.options.forEach((opt, idx) => {
+                    optionsHtml += `
+                        <button onclick="checkChoice(${idx})" id="opt-${idx}" class="w-full text-left p-3 rounded-xl border-2 border-black hover:bg-yellow-100 transition font-bold text-xs flex items-center justify-between">
+                            <span>${opt.text}</span>
+                            <i class="far fa-circle"></i>
+                        </button>
+                    `;
+                });
+
+                container.innerHTML = `
+                    <div class="space-y-3">
+                        <span class="inline-block bg-yellow-200 border-2 border-black px-2 py-0.5 rounded-lg text-xs font-black">${q.title}</span>
+                        <h4 class="text-sm font-black text-black">${q.question}</h4>
+                        <div class="grid gap-2 pt-1">${optionsHtml}</div>
+                    </div>
+                `;
+            } else if (q.type === 'matching') {
+                selectedLeft = null;
+                matchedCount = 0;
+
+                let leftHtml = '';
+                q.leftItems.forEach(item => {
+                    leftHtml += `<button id="${item.id}" onclick="selectLeft('${item.id}', '${item.target}')" class="matching-btn w-full p-2.5 rounded-xl border-2 border-black font-bold text-xs text-left">${item.text}</button>`;
+                });
+
+                let rightHtml = '';
+                q.rightItems.forEach(text => {
+                    rightHtml += `<button onclick="selectRight('${text}')" class="w-full p-2.5 rounded-xl border-2 border-black bg-slate-50 font-bold text-xs text-center">${text}</button>`;
+                });
+
+                container.innerHTML = `
+                    <div class="space-y-3">
+                        <span class="inline-block bg-yellow-200 border-2 border-black px-2 py-0.5 rounded-lg text-xs font-black">${q.title}</span>
+                        <p class="text-xs font-bold text-slate-700">${q.instructions}</p>
+                        <div class="grid grid-cols-2 gap-3 pt-1">
+                            <div class="space-y-2">${leftHtml}</div>
+                            <div class="space-y-2">${rightHtml}</div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function checkChoice(idx) {
+            const q = practiceQuestions[currentIndex];
+            const opt = q.options[idx];
+            const feedback = document.getElementById('feedback-box');
+            const nextBtn = document.getElementById('next-btn');
+
+            q.options.forEach((_, i) => document.getElementById(`opt-${i}`).disabled = true);
+
+            if (opt.correct) {
+                practiceScore += 10;
+                const btn = document.getElementById(`opt-${idx}`);
+                btn.className = "w-full text-left p-3 rounded-xl border-2 border-black bg-emerald-100 font-bold text-xs flex items-center justify-between";
+                feedback.className = "mt-4 p-3 rounded-xl text-xs font-bold border-2 border-black bg-emerald-100 text-emerald-900 block";
+                feedback.innerText = `✨ ${q.explain}`;
+            } else {
+                const btn = document.getElementById(`opt-${idx}`);
+                btn.className = "w-full text-left p-3 rounded-xl border-2 border-black bg-rose-100 font-bold text-xs flex items-center justify-between";
+                feedback.className = "mt-4 p-3 rounded-xl text-xs font-bold border-2 border-black bg-rose-100 text-rose-900 block";
+                feedback.innerText = `💡 ${q.explain}`;
+            }
+
+            nextBtn.className = "peanuts-btn px-4 py-2 bg-indigo-500 text-white rounded-xl text-xs inline-block";
+        }
+
+        function selectLeft(id, target) {
+            if (document.getElementById(id).classList.contains('matched')) return;
+            if (selectedLeft) document.getElementById(selectedLeft.id).classList.remove('selected');
+            selectedLeft = { id, target };
+            document.getElementById(id).classList.add('selected');
+        }
+
+        function selectRight(targetValue) {
+            if (!selectedLeft) return;
+            const q = practiceQuestions[currentIndex];
+
+            if (selectedLeft.target === targetValue) {
+                const leftBtn = document.getElementById(selectedLeft.id);
+                leftBtn.classList.remove('selected');
+                leftBtn.classList.add('matched');
+                matchedCount++;
+                selectedLeft = null;
+
+                if (matchedCount === q.leftItems.length) {
+                    practiceScore += 10;
+                    const feedback = document.getElementById('feedback-box');
+                    feedback.className = "mt-4 p-3 rounded-xl text-xs font-bold border-2 border-black bg-emerald-100 text-emerald-900 block";
+                    feedback.innerText = `🎉 ${q.explain}`;
+                    document.getElementById('next-btn').className = "peanuts-btn px-4 py-2 bg-indigo-500 text-white rounded-xl text-xs inline-block";
+                }
+            }
+        }
+
+        function nextQuestion() {
+            if (currentIndex < practiceQuestions.length - 1) {
+                currentIndex++;
+                renderQuestion();
+            } else {
+                updateScore(practiceScore);
+                alert(`恭喜完成基礎特訓！獲得 ${practiceScore} 分，已幫你更新至英雄榜！`);
+            }
+        }
+
+        // ----------------------------------------------------
+        // 4. AI 知識挑戰賽邏輯
+        // ----------------------------------------------------
+        let aiScore = 0;
+        let aiTimer = null;
+        let aiTimeLeft = 15;
+        let aiCurrentQuestion = 0;
+
+        const aiMockBank = [
+            {
+                q: "「湖面平靜得像鏡子【一般】。」這裡的【一般】代表什麼意思？",
+                opts: ["A. 比喻，如同/像……一樣", "B. 習慣，平常的時候", "C. 普通，沒特色"],
+                ans: 0,
+                exp: "正確！這句將湖面比喻成鏡子。"
+            },
+            {
+                q: "「風車在強風中一直【轉】動。」這裏的【轉】音是？",
+                opts: ["A. ㄓㄨㄢˇ（三聲）", "B. ㄓㄨㄢˋ（四聲）", "C. ㄓㄨㄢ（一聲）"],
+                ans: 1,
+                exp: "讚喔！繞軸旋轉讀作四聲 ㄓㄨㄢˋ。"
+            },
+            {
+                q: "「這件事【一般】人很難做到。」句中的【一般】意思是？",
+                opts: ["A. 像……一樣", "B. 普通/通常的人", "C. 向左轉"],
+                ans: 1,
+                exp: "答對了！指普通或大多數的人。"
+            }
+        ];
+
+        function startAiChallenge() {
+            aiScore = 0;
+            aiCurrentQuestion = 0;
+            document.getElementById('ai-quiz-start-box').classList.add('hidden');
+            document.getElementById('ai-quiz-play-box').classList.remove('hidden');
+            nextAiQuestion();
+        }
+
+        function nextAiQuestion() {
+            if (aiCurrentQuestion >= 3) {
+                // 結束挑戰
+                clearInterval(aiTimer);
+                updateScore(aiScore);
+                alert(`🏁 AI 挑戰賽結束！本次獲得分數：${aiScore} 分！排行榜已更新！`);
+                document.getElementById('ai-quiz-start-box').classList.remove('hidden');
+                document.getElementById('ai-quiz-play-box').classList.add('hidden');
+                switchTab('leaderboard');
+                return;
+            }
+
+            const q = aiMockBank[aiCurrentQuestion];
+            document.getElementById('ai-score').innerText = aiScore;
+            document.getElementById('ai-q-title').innerText = `第 ${aiCurrentQuestion + 1} 題：${q.q}`;
+            document.getElementById('ai-feedback').className = "hidden";
+
+            let optsHtml = '';
+            q.opts.forEach((opt, idx) => {
+                optsHtml += `<button onclick="checkAiAns(${idx})" id="ai-opt-${idx}" class="peanuts-btn w-full p-2.5 bg-white rounded-xl text-xs text-left">${opt}</button>`;
+            });
+            document.getElementById('ai-options').innerHTML = optsHtml;
+
+            // 啟動倒數計時
+            aiTimeLeft = 15;
+            document.getElementById('ai-timer-text').innerText = aiTimeLeft;
+            document.getElementById('ai-timer-bar').style.width = '100%';
+
+            clearInterval(aiTimer);
+            aiTimer = setInterval(() => {
+                aiTimeLeft--;
+                document.getElementById('ai-timer-text').innerText = aiTimeLeft;
+                document.getElementById('ai-timer-bar').style.width = `${(aiTimeLeft / 15) * 100}%`;
+
+                if (aiTimeLeft <= 0) {
+                    clearInterval(aiTimer);
+                    checkAiAns(-1); // 超時
+                }
+            }, 1000);
+        }
+
+        function checkAiAns(idx) {
+            clearInterval(aiTimer);
+            const q = aiMockBank[aiCurrentQuestion];
+            const feedback = document.getElementById('ai-feedback');
+
+            q.opts.forEach((_, i) => {
+                const btn = document.getElementById(`ai-opt-${i}`);
+                if (btn) btn.disabled = true;
+            });
+
+            if (idx === q.ans) {
+                const speedBonus = aiTimeLeft * 2;
+                const points = 20 + speedBonus;
+                aiScore += points;
+                feedback.className = "p-3 rounded-xl border-2 border-black bg-emerald-100 text-emerald-900 text-xs font-bold block";
+                feedback.innerText = `✨ 答對了！獲得 ${points} 分（包含速度加分 ${speedBonus} 分）！${q.exp}`;
+            } else {
+                feedback.className = "p-3 rounded-xl border-2 border-black bg-rose-100 text-rose-900 text-xs font-bold block";
+                feedback.innerText = idx === -1 ? `⏰ 時間到！${q.exp}` : `💡 答錯囉！${q.exp}`;
+            }
+
+            aiCurrentQuestion++;
+            setTimeout(nextAiQuestion, 2500);
+        }
+    </script>
+</body>
+</html>
