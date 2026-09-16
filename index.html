@@ -13,9 +13,9 @@
             -webkit-tap-highlight-color: transparent; /* 防止手機點擊藍框 */
         }
         body {
-    user-select: none; /* 防止使用者選取文字 */
-    -webkit-user-select: none;
-              }
+            user-select: none; /* 防止使用者選取文字 */
+            -webkit-user-select: none;
+        }
         
         body {
             margin: 0;
@@ -71,7 +71,7 @@
         .bg-chinese { background-color: #ff9800; }
         .bg-math { background-color: #2196f3; }
 
-        /* --- 新增：子分類標題 --- */
+        /* --- 子分類標題 --- */
         .sub-category-title {
             font-size: 20px;
             color: #444;
@@ -80,7 +80,7 @@
             padding-left: 10px;
         }
 
-        /* --- 修正：滑動容器結構 --- */
+        /* --- 滑動容器結構 --- */
         .slider-wrapper {
             position: relative;
             display: flex;
@@ -118,7 +118,7 @@
             box-shadow: 0 8px 15px rgba(0,0,0,0.2);
         }
 
-        /* --- 新增：左右箭頭按鈕 --- */
+        /* --- 左右箭頭按鈕 --- */
         .nav-btn {
             background: rgba(0,0,0,0.3);
             color: white;
@@ -148,6 +148,7 @@
 
     <div class="main-content">
         
+        <!-- 國語領域 -->
         <div class="category-section">
             <div class="category-label bg-chinese">國語領域</div>
             
@@ -160,13 +161,11 @@
                         <div style="font-weight:bold">「在」與「再」</div>
                         <div style="color:#666; font-size:14px">分辨用法練習</div>
                     </a>
-                    </a>
                     <a href="game-4G_chinese_L1" class="game-card">
                         <div style="font-size:40px">🖊️</div>
                         <div style="font-weight:bold">SNOOPY 國語大冒險</div>
                         <div style="color:#666; font-size:14px">「一般」句型與「轉」多音字特訓</div>
                     </a>
-                    
                     <a href="game-de" class="game-card">
                         <div style="font-size:40px">🖊️</div>
                         <div style="font-weight:bold">「的」與「得」</div>
@@ -177,33 +176,30 @@
                         <div style="font-weight:bold">國字賓果</div>
                         <div style="color:#666; font-size:14px">兩人以上遊玩，記得都要打開遊戲</div>
                     </a>
-                    </a>
                     <a href="game-zooinpei" class="game-card">
                         <div style="font-size:40px">🖊️</div>
                         <div style="font-weight:bold">ㄅㄆㄇ注音配</div>
                         <div style="color:#666; font-size:14px">分辨注音練習</div>
                     </a>
-                    </div>
+                </div>
                 <button class="nav-btn" onclick="slideScroll('chinese-1', 1)">❯</button>
             </div>
+
             <div class="sub-category-title">🏷️ 量詞</div>
-                 <div class="slider-wrapper">
-                 <button class="nav-btn" onclick="slideScroll('quantifier', -1)">❮</button>
-                  
-                  <div class="game-slider" id="quantifier">
-                     <a href="https://es-d-8393543720260422-019da988-f81b-75e2-af8d-7bd68f11fe2b.codepen.dev/" class="game-card">
-                    <div style="font-size:40px">🎮</div>
-                    <div style="font-weight:bold">雙人量詞對戰</div>
-                    <div style="color:#666; font-size:14px">made by threads:rose_scott老師</div>
-               <button class="nav-btn" onclick="slideScroll('chinese-1', 1)">❯</button>
-             </div>
-        </a>
+            <div class="slider-wrapper">
+                <button class="nav-btn" onclick="slideScroll('quantifier', -1)">❮</button>
+                <div class="game-slider" id="quantifier">
+                    <a href="https://es-d-8393543720260422-019da988-f81b-75e2-af8d-7bd68f11fe2b.codepen.dev/" class="game-card">
+                        <div style="font-size:40px">🎮</div>
+                        <div style="font-weight:bold">雙人量詞對戰</div>
+                        <div style="color:#666; font-size:14px">made by threads:rose_scott老師</div>
+                    </a>
+                </div>
+                <button class="nav-btn" onclick="slideScroll('quantifier', 1)">❯</button>
+            </div>
         </div>
 
-    <button class="nav-btn" onclick="slideScroll('quantifier', 1)">❯</button>
-</div>
-        </div>
-
+        <!-- 數學領域 -->
         <div class="category-section">
             <div class="category-label bg-math">數學領域</div>
             
@@ -244,24 +240,24 @@
                 </div>
                 <button class="nav-btn" onclick="slideScroll('math-1', 1)">❯</button>
             </div>
+
             <div class="sub-category-title">🏷️ 基本計算</div>
-             <div class="slider-wrapper">
+            <div class="slider-wrapper">
                 <button class="nav-btn" onclick="slideScroll('calculate', -1)">❮</button>
                 <div class="game-slider" id="calculate">
-              <a href="https://es-d-8393543720260422-019daa43-d317-74e4-abb9-8f9c8835f53b.codepen.dev/" class="game-card">
-            <div style="font-size:40px">🏗️</div>
-            <div style="font-weight:bold">數感創世神-雙人計算對戰</div>
-            <div style="color:#666; font-size:14px">made by threads:rose_scott老師</div>
-            </a>
-             <a href="game-time" class="game-card">
-             <div style="font-size:40px">🕛</div>
-             <div style="font-weight:bold">輪轉時鐘</div>
-             <div style="color:#666; font-size:14px">單人時間計算</div>
-             </a>
+                    <a href="https://es-d-8393543720260422-019daa43-d317-74e4-abb9-8f9c8835f53b.codepen.dev/" class="game-card">
+                        <div style="font-size:40px">🏗️</div>
+                        <div style="font-weight:bold">數感創世神-雙人計算對戰</div>
+                        <div style="color:#666; font-size:14px">made by threads:rose_scott老師</div>
+                    </a>
+                    <a href="game-time" class="game-card">
+                        <div style="font-size:40px">🕛</div>
+                        <div style="font-weight:bold">輪轉時鐘</div>
+                        <div style="color:#666; font-size:14px">單人時間計算</div>
+                    </a>
                 </div>
-
-    <button class="nav-btn" onclick="slideScroll('calculate', 1)">❯</button>
-</div>
+                <button class="nav-btn" onclick="slideScroll('calculate', 1)">❯</button>
+            </div>
         </div>
 
     </div>
