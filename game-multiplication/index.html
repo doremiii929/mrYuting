@@ -3,221 +3,297 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>九九乘法大挑戰</title>
+    <title>九九乘法大挑戰 - 雙人左右對戰版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @font-face {
             font-family: 'DFKai-SB';
             src: local('DFKai-SB'), local('BiauKai'), local('標楷體');
         }
 
+        * {
+            font-family: 'DFKai-SB', '標楷體', 'BiauKai', serif !important;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* 清新馬卡龍柔光漸層背景 */
         body {
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 50%, #fce7f3 100%);
+            min-height: 100vh;
             margin: 0;
             padding: 0;
-            font-family: 'DFKai-SB', '標楷體', serif;
-            background: linear-gradient(135deg, #e1f5fe 0%, #fce4ec 50%, #bbdefb 100%);
-            min-height: 100vh;
+            overflow-x: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        #game-container {
-            width: 95%;
-            max-width: 850px; /* 稍微加寬，確保標題不跳行 */
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 40px;
-            padding: 50px 30px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            border: 8px solid #64b5f6;
-        }
-
-        /* ---------------- 注音排版：和諧舒適比例 ---------------- */
+        /* 注音符號直書排版核心 */
         .word-wrap {
             display: inline-flex;
             align-items: center;
-            margin: 0 4px; /* 國字間的舒適間距 */
+            margin: 0 2px;
             vertical-align: middle;
             line-height: 1;
-            white-space: nowrap; /* 強制不換行 */
-        }
-        
-        /* 標題專用：大國字、適中注音 */
-        .title-style {
-            display: flex;
-            justify-content: center;
-            flex-wrap: nowrap; /* 確保標題所有字排在同一行 */
-            margin-bottom: 30px;
-        }
-        .title-style .char { 
-            font-size: 68px; /* 標題國字：顯眼但不突兀 */
-            color: #0d47a1; 
-            font-weight: bold;
-        }
-        .title-style .bopomofo {
-            font-size: 20px; /* 標題注音：與國字比例約 1:3.4，視覺最舒適 */
-            margin-left: 6px;
-            padding-right: 12px;
-            color: #283593;
+            white-space: nowrap;
         }
 
-        /* 通用國字與注音樣式 */
-        .char { font-weight: bold; color: #333; }
+        .char {
+            font-weight: bold;
+            color: inherit;
+        }
+
         .bopomofo {
             position: relative;
             display: inline-flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            font-size: 0.42em; 
-            line-height: 1.1;
-            margin-left: 3px;
-            padding-right: 10px;
-            color: #444;
+            font-size: 0.42em;
+            line-height: 1.05;
+            margin-left: 2px;
+            padding-right: 8px;
+            color: inherit;
+            opacity: 0.88;
+            font-weight: normal;
         }
+
         .tone-right {
             position: absolute;
-            right: 0;
+            right: -1px;
             top: 50%;
-            transform: translateY(-50%);
-            font-size: 1em;
+            transform: translateY(-55%);
+            font-size: 0.95em;
             font-weight: bold;
         }
 
-        /* ---------------- 介面元素 ---------------- */
-        #login-screen, #game-screen, #result-screen { display: none; }
-        .active { display: block !important; }
-
-        input[type="text"] {
-            width: 60%;
-            padding: 15px;
-            font-size: 28px;
-            border: 4px solid #f06292;
-            border-radius: 15px;
-            text-align: center;
-            margin: 20px 0 40px;
-            font-family: 'DFKai-SB', '標楷體';
+        /* 標題與視覺卡片 */
+        .title-style .char {
+            font-size: clamp(28px, 4vw, 50px);
+            color: #0c4a6e;
+            text-shadow: 2px 2px 0px rgba(255,255,255,0.9);
         }
 
-        .btn-main {
-            background-color: #f06292;
-            color: white;
-            padding: 18px 50px;
-            font-size: 32px;
-            border: none;
-            border-radius: 35px;
-            box-shadow: 0 6px 0 #ad1457;
-            cursor: pointer;
-            font-family: 'DFKai-SB', '標楷體';
-            transition: all 0.2s;
-        }
-        .btn-main:active { transform: translateY(3px); box-shadow: 0 2px 0 #ad1457; }
-
-        /* ---------------- 遊戲中樣式 ---------------- */
-        .stats-bar {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            background: #fff;
-            padding: 15px;
-            border-radius: 20px;
-            margin-bottom: 30px;
-            font-size: 26px;
-            border: 3px solid #e1f5fe;
-        }
-        .num-red { color: #d32f2f; font-weight: bold; font-size: 32px; }
-
-        #question-display {
-            font-size: 120px;
-            margin: 40px 0;
-            color: #1a237e;
-            font-weight: bold;
+        .glass-card {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(16px);
+            border: 4px solid rgba(255, 255, 255, 0.95);
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
         }
 
-        .options-container {
-            display: flex;
-            justify-content: center;
-            gap: 25px;
+        /* 彈性微浮雕按鈕 */
+        .btn-bubbly {
+            transition: all 0.12s ease-out;
+            box-shadow: 0 6px 0 rgba(0, 0, 0, 0.15);
         }
-        .option-btn {
-            width: 180px;
-            padding: 30px 0;
-            font-size: 65px;
-            background-color: #42a5f5;
-            color: white;
-            border: none;
-            border-radius: 30px;
-            box-shadow: 0 8px 0 #1e88e5;
-            cursor: pointer;
-            font-family: 'DFKai-SB', '標楷體';
+        .btn-bubbly:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 rgba(0, 0, 0, 0.15);
         }
-        .btn-correct { background-color: #66bb6a !important; box-shadow: 0 8px 0 #2e7d32 !important; }
-        .btn-wrong { background-color: #ef5350 !important; box-shadow: 0 8px 0 #c62828 !important; }
 
-        /* ---------------- 結算畫面修正 ---------------- */
-        .result-box {
-            background: #fff;
-            padding: 40px 60px;
-            border-radius: 35px;
-            border: 4px solid #f8bbd0;
-            margin: 10px 0 30px;
-            display: inline-block;
-            text-align: left;
+        /* 答題回饋動畫 */
+        .btn-correct {
+            background-color: #22c55e !important;
+            box-shadow: 0 6px 0 #15803d !important;
+            color: white !important;
+            animation: pulse 0.25s ease-in-out;
         }
-        .score-line {
-            font-size: 36px;
-            color: #333;
-            line-height: 2.2;
-            display: flex;
-            align-items: center;
+
+        .btn-wrong {
+            background-color: #ef4444 !important;
+            box-shadow: 0 6px 0 #b91c1c !important;
+            color: white !important;
+            animation: shake 0.3s ease-in-out;
         }
-        .score-num { color: #d32f2f; font-weight: bold; margin: 0 12px; font-size: 1.2em; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-6px); }
+            40% { transform: translateX(6px); }
+            60% { transform: translateX(-3px); }
+            80% { transform: translateX(3px); }
+        }
     </style>
 </head>
-<body>
+<body class="p-2 sm:p-4">
 
-<div id="game-container">
-    
-    <div id="login-screen" class="active">
-        <div id="login-title" class="title-style"></div>
-        <input type="text" id="player-name" placeholder="輸入姓名" maxlength="8">
-        <br>
-        <button class="btn-main" onclick="startGame()" id="btn-go"></button>
+<!-- 1. 設定與模式選擇畫面 -->
+<div id="setup-screen" class="w-full max-w-2xl glass-card rounded-3xl p-6 sm:p-8 text-center my-auto">
+    <!-- 主標題 -->
+    <div id="main-title" class="title-style mb-6 flex flex-wrap justify-center items-center gap-1"></div>
+
+    <!-- 模式切換鈕 -->
+    <div class="flex justify-center gap-3 sm:gap-6 mb-8">
+        <button id="mode-single-btn" onclick="selectMode('single')" class="btn-bubbly px-5 py-3 rounded-2xl text-xl sm:text-2xl font-bold border-4 border-sky-400 bg-sky-100 text-sky-800">
+            <span class="bpmf-text">單[ㄉㄢ]人[ㄖㄣˊ]挑[ㄊㄧㄠˇ]戰[ㄓㄢˋ]</span>
+        </button>
+        <button id="mode-pvp-btn" onclick="selectMode('pvp')" class="btn-bubbly px-5 py-3 rounded-2xl text-xl sm:text-2xl font-bold border-4 border-amber-300 bg-amber-50 text-amber-800 opacity-60">
+            <span class="bpmf-text">雙[ㄕㄨㄤ]人[ㄖㄣˊ]對[ㄉㄨㄟˋ]戰[ㄓㄢˋ]</span>
+        </button>
     </div>
 
-    <div id="game-screen">
-        <div class="stats-bar">
-            <div id="stat-timer"></div>
-            <div id="stat-correct"></div>
-            <div id="stat-wrong"></div>
+    <!-- 名字輸入區 -->
+    <div id="input-section" class="bg-white/80 p-5 rounded-2xl border-2 border-sky-200 mb-8 max-w-md mx-auto shadow-inner">
+        <!-- 單人模式姓名 -->
+        <div id="p1-only-box" class="space-y-2">
+            <label class="block text-2xl font-bold text-sky-900 mb-2">
+                <span class="bpmf-text">請[ㄑㄧㄥˇ]輸[ㄕㄨ]入[ㄖㄨˋ]名[ㄇㄧㄥˊ]字[ㄗˋ]：</span>
+            </label>
+            <input type="text" id="p1-name-single" value="小勇士" maxlength="6" 
+                   class="w-full text-center text-2xl p-3 border-4 border-sky-300 rounded-xl focus:outline-none focus:border-sky-500 bg-sky-50/50">
         </div>
-        <div id="question-display"></div>
-        <div class="options-container">
-            <button class="option-btn" onclick="checkAnswer(0)"></button>
-            <button class="option-btn" onclick="checkAnswer(1)"></button>
-            <button class="option-btn" onclick="checkAnswer(2)"></button>
+
+        <!-- 雙人模式姓名（左右兩邊） -->
+        <div id="pvp-box" class="hidden grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-lg font-bold text-rose-800 mb-1">
+                    <span class="bpmf-text">左[ㄗㄨㄛˇ]邊[ㄅㄧㄢ]玩[ㄨㄢˊ]家[ㄐㄧㄚ]：</span>
+                </label>
+                <input type="text" id="p1-name-pvp" value="玩家 1" maxlength="6" 
+                       class="w-full text-center text-xl p-2.5 border-4 border-rose-300 rounded-xl focus:outline-none focus:border-rose-500 bg-rose-50/50">
+            </div>
+            <div>
+                <label class="block text-lg font-bold text-teal-800 mb-1">
+                    <span class="bpmf-text">右[ㄧㄡˋ]邊[ㄅㄧㄢ]玩[ㄨㄢˊ]家[ㄐㄧㄚ]：</span>
+                </label>
+                <input type="text" id="p2-name-pvp" value="玩家 2" maxlength="6" 
+                       class="w-full text-center text-xl p-2.5 border-4 border-teal-300 rounded-xl focus:outline-none focus:border-teal-500 bg-teal-50/50">
+            </div>
         </div>
     </div>
 
-    <div id="result-screen">
-        <div id="end-title-large" class="title-style"></div>
-        <div class="result-box">
-            <div class="score-line" id="final-name"></div>
-            <div class="score-line" id="line-1"></div>
-            <div class="score-line" id="line-2"></div>
-            <div class="score-line" id="line-3"></div>
+    <!-- 開始按鈕 -->
+    <button onclick="startGame()" class="btn-bubbly bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-2xl sm:text-3xl px-10 py-4 rounded-full border-b-4 border-emerald-700">
+        <span class="bpmf-text">開[ㄎㄞ]始[ㄕˇ]遊[ㄧㄡˊ]戲[ㄒㄧˋ]！</span>
+    </button>
+</div>
+
+<!-- 2. 單人挑戰模式畫面 -->
+<div id="single-game-screen" class="hidden w-full max-w-2xl glass-card rounded-3xl p-6 text-center my-auto">
+    <div class="flex justify-between items-center bg-white/90 p-4 rounded-2xl border-2 border-sky-200 mb-6 text-xl sm:text-2xl font-bold">
+        <div class="text-amber-600 flex items-center gap-1">
+            <span class="bpmf-text">時[ㄕˊ]間[ㄐㄧㄢ]：</span>
+            <span id="single-timer" class="text-3xl sm:text-4xl text-amber-600">60</span>
+            <span class="bpmf-text">秒[ㄇㄧㄠˇ]</span>
         </div>
-        <br>
-        <button class="btn-main" onclick="location.reload()" id="btn-restart"></button>
+        <div class="text-emerald-600 flex items-center gap-1">
+            <span class="bpmf-text">對[ㄉㄨㄟˋ]：</span>
+            <span id="single-correct" class="text-3xl sm:text-4xl">0</span>
+        </div>
+        <div class="text-rose-500 flex items-center gap-1">
+            <span class="bpmf-text">錯[ㄘㄨㄛˋ]：</span>
+            <span id="single-wrong" class="text-3xl sm:text-4xl">0</span>
+        </div>
+    </div>
+
+    <div class="my-6 py-6 bg-sky-50/80 rounded-3xl border-4 border-sky-200 shadow-inner">
+        <div id="single-player-tag" class="text-xl sm:text-2xl text-sky-800 font-bold mb-2"></div>
+        <div id="single-question" class="text-6xl sm:text-8xl font-extrabold text-sky-950 tracking-wider">8 × 9 = ?</div>
+    </div>
+
+    <div class="grid grid-cols-3 gap-4 sm:gap-6 mt-6">
+        <button class="single-opt btn-bubbly bg-sky-400 text-white text-4xl sm:text-6xl font-bold py-6 rounded-2xl border-b-8 border-sky-600" onclick="checkSingleAnswer(0)"></button>
+        <button class="single-opt btn-bubbly bg-sky-400 text-white text-4xl sm:text-6xl font-bold py-6 rounded-2xl border-b-8 border-sky-600" onclick="checkSingleAnswer(1)"></button>
+        <button class="single-opt btn-bubbly bg-sky-400 text-white text-4xl sm:text-6xl font-bold py-6 rounded-2xl border-b-8 border-sky-600" onclick="checkSingleAnswer(2)"></button>
     </div>
 </div>
 
+<!-- 3. 雙人對戰模式畫面（左右對稱 Side-by-Side Layout） -->
+<div id="pvp-game-screen" class="hidden w-full max-w-6xl h-[92vh] flex flex-col justify-between gap-2 p-2 my-auto">
+    
+    <!-- 主要對戰區域：左右分欄 -->
+    <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 relative overflow-hidden">
+        
+        <!-- 左側：玩家 1 專屬區（粉紅/珊瑚橘主題） -->
+        <div class="glass-card rounded-3xl p-4 flex flex-col justify-between border-4 border-rose-300 bg-rose-50/50">
+            <!-- 資訊列 -->
+            <div class="flex justify-between items-center bg-white/90 px-4 py-2 rounded-xl text-lg sm:text-xl font-bold text-rose-900 border border-rose-200 shadow-sm">
+                <span id="p1-display-name" class="text-rose-600 font-extrabold text-xl sm:text-2xl"></span>
+                <div class="flex gap-3">
+                    <div><span class="bpmf-text">得[ㄉㄜˊ]分[ㄈㄣ]：</span><span id="p1-score" class="text-2xl sm:text-3xl text-rose-600 font-extrabold">0</span></div>
+                    <div><span class="bpmf-text">失[ㄕ]誤[ㄨˋ]：</span><span id="p1-wrong" class="text-2xl sm:text-3xl text-gray-400 font-bold">0</span></div>
+                </div>
+            </div>
+
+            <!-- 題目區域 -->
+            <div class="my-auto text-center py-4 sm:py-8 bg-white/60 rounded-2xl border-2 border-rose-200">
+                <div id="p1-question" class="text-5xl sm:text-7xl font-black text-rose-950 tracking-wider"></div>
+            </div>
+
+            <!-- 選項按鈕 -->
+            <div class="grid grid-cols-3 gap-2 sm:gap-3">
+                <button class="p1-opt btn-bubbly bg-rose-400 text-white text-3xl sm:text-5xl font-bold py-4 sm:py-6 rounded-2xl border-b-4 border-rose-600" onclick="checkPvpAnswer(1, 0)"></button>
+                <button class="p1-opt btn-bubbly bg-rose-400 text-white text-3xl sm:text-5xl font-bold py-4 sm:py-6 rounded-2xl border-b-4 border-rose-600" onclick="checkPvpAnswer(1, 1)"></button>
+                <button class="p1-opt btn-bubbly bg-rose-400 text-white text-3xl sm:text-5xl font-bold py-4 sm:py-6 rounded-2xl border-b-4 border-rose-600" onclick="checkPvpAnswer(1, 2)"></button>
+            </div>
+        </div>
+
+        <!-- 中央計時與分隔區 (桌機版顯示為立體標籤) -->
+        <div class="hidden md:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex-col items-center">
+            <div class="bg-amber-400 text-amber-950 font-black text-2xl px-5 py-3 rounded-full border-4 border-white shadow-xl flex flex-col items-center">
+                <span class="text-xs bpmf-text font-normal text-amber-900">倒[ㄉㄠˋ]數[ㄕㄨˋ]</span>
+                <span id="pvp-timer-desktop" class="text-3xl text-red-700 font-extrabold">60</span>
+            </div>
+        </div>
+
+        <!-- 右側：玩家 2 專屬區（薄荷綠/天藍主題） -->
+        <div class="glass-card rounded-3xl p-4 flex flex-col justify-between border-4 border-teal-300 bg-teal-50/50">
+            <!-- 資訊列 -->
+            <div class="flex justify-between items-center bg-white/90 px-4 py-2 rounded-xl text-lg sm:text-xl font-bold text-teal-900 border border-teal-200 shadow-sm">
+                <span id="p2-display-name" class="text-teal-600 font-extrabold text-xl sm:text-2xl"></span>
+                <div class="flex gap-3">
+                    <div><span class="bpmf-text">得[ㄉㄜˊ]分[ㄈㄣ]：</span><span id="p2-score" class="text-2xl sm:text-3xl text-teal-600 font-extrabold">0</span></div>
+                    <div><span class="bpmf-text">失[ㄕ]誤[ㄨˋ]：</span><span id="p2-wrong" class="text-2xl sm:text-3xl text-gray-400 font-bold">0</span></div>
+                </div>
+            </div>
+
+            <!-- 題目區域 -->
+            <div class="my-auto text-center py-4 sm:py-8 bg-white/60 rounded-2xl border-2 border-teal-200">
+                <div id="p2-question" class="text-5xl sm:text-7xl font-black text-teal-950 tracking-wider"></div>
+            </div>
+
+            <!-- 選項按鈕 -->
+            <div class="grid grid-cols-3 gap-2 sm:gap-3">
+                <button class="p2-opt btn-bubbly bg-teal-500 text-white text-3xl sm:text-5xl font-bold py-4 sm:py-6 rounded-2xl border-b-4 border-teal-700" onclick="checkPvpAnswer(2, 0)"></button>
+                <button class="p2-opt btn-bubbly bg-teal-500 text-white text-3xl sm:text-5xl font-bold py-4 sm:py-6 rounded-2xl border-b-4 border-teal-700" onclick="checkPvpAnswer(2, 1)"></button>
+                <button class="p2-opt btn-bubbly bg-teal-500 text-white text-3xl sm:text-5xl font-bold py-4 sm:py-6 rounded-2xl border-b-4 border-teal-700" onclick="checkPvpAnswer(2, 2)"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 移動端專用計時 Bar (螢幕較小微小顯示) -->
+    <div class="md:hidden bg-amber-400 text-amber-950 rounded-full py-1 px-4 text-center font-bold text-lg border-2 border-white flex justify-center items-center gap-2">
+        <span class="bpmf-text">剩[ㄕㄥˋ]餘[ㄩˊ]時[ㄕˊ]間[ㄐㄧㄢ]：</span>
+        <span id="pvp-timer-mobile" class="text-xl text-red-700 font-black">60</span>
+        <span class="bpmf-text">秒[ㄇㄧㄠˇ]</span>
+    </div>
+</div>
+
+<!-- 4. 遊戲結束結算畫面 -->
+<div id="result-screen" class="hidden w-full max-w-3xl glass-card rounded-3xl p-6 sm:p-8 text-center my-auto">
+    <div id="result-title" class="title-style mb-4 flex justify-center"></div>
+
+    <!-- 勝負頒獎橫幅 -->
+    <div id="winner-announcement" class="hidden my-4 p-4 rounded-2xl bg-gradient-to-r from-amber-100 via-amber-200 to-amber-100 border-4 border-amber-300 text-amber-900 font-extrabold text-2xl sm:text-3xl shadow-md">
+    </div>
+
+    <!-- 左右戰績詳情 -->
+    <div id="result-stats-box" class="bg-white/90 p-5 rounded-2xl border-2 border-sky-200 my-6 text-left space-y-4 max-w-2xl mx-auto text-lg sm:text-2xl">
+    </div>
+
+    <button onclick="resetToHome()" class="btn-bubbly bg-sky-500 hover:bg-sky-600 text-white font-bold text-2xl sm:text-3xl px-10 py-4 rounded-full border-b-4 border-sky-700 mt-2">
+        <span class="bpmf-text">回[ㄏㄨㄟˊ]首[ㄕㄡˇ]頁[ㄧㄝˋ] / 再[ㄗㄞˋ]玩[ㄨㄢˊ]一[ㄧ]次[ㄘˋ]</span>
+    </button>
+</div>
+
 <script>
+    // 注音自動轉換與解析
     function parseBpmf(text) {
         return text.replace(/([^\u0000-\u007F]+)(?:\[([^\]]+)\])/g, (match, char, bpmf) => {
             let tone = '';
             let mainSymbols = bpmf;
-            if (['ˊ','ˇ','ˋ'].some(t => bpmf.includes(t))) {
+            if (['ˊ','ˇ','ˋ','˙'].some(t => bpmf.includes(t))) {
                 tone = bpmf.slice(-1);
                 mainSymbols = bpmf.slice(0, -1);
             }
@@ -227,81 +303,276 @@
         });
     }
 
-    let timeLeft = 60, correctTotal = 0, wrongTotal = 0, currentAnswer = 0, hasErroredThisTurn = false, timerId, pName = "";
+    function renderAllBpmfText() {
+        document.querySelectorAll('.bpmf-text').forEach(el => {
+            if (!el.dataset.raw) {
+                el.dataset.raw = el.innerText;
+            }
+            el.innerHTML = parseBpmf(el.dataset.raw);
+        });
+    }
 
-    function init() {
-        document.getElementById('login-title').innerHTML = parseBpmf("九[ㄐㄧㄡˇ]九[ㄐㄧㄡˇ]乘[ㄔㄥˊ]法[ㄈㄚˇ]大[ㄉㄚˋ]挑[ㄊㄧㄠˇ]戰[ㄓㄢˋ]");
-        document.getElementById('btn-go').innerHTML = parseBpmf("開[ㄎㄞ]始[ㄕˇ]遊[ㄧㄡˊ]玩[ㄨㄢˊ]");
-        document.getElementById('stat-timer').innerHTML = parseBpmf("時[ㄕˊ]間[ㄐㄧㄢ]：") + '<span id="timer" class="num-red">60</span>';
-        document.getElementById('stat-correct').innerHTML = parseBpmf("答[ㄉㄚˊ]對[ㄉㄨㄟˋ]：") + '<span id="correct-count" class="num-red">0</span>';
-        document.getElementById('stat-wrong').innerHTML = parseBpmf("答[ㄉㄚˊ]錯[ㄘㄨㄛˋ]：") + '<span id="wrong-count" class="num-red">0</span>';
+    // 狀態變數
+    let currentMode = 'single';
+    let timerId = null;
+    let timeLeft = 60;
+
+    let singleState = { name: '小勇士', correct: 0, wrong: 0, ans: 0, hasErrored: false };
+    let pvpState = {
+        p1: { name: '玩家 1', score: 0, wrong: 0, ans: 0, errored: false },
+        p2: { name: '玩家 2', score: 0, wrong: 0, ans: 0, errored: false }
+    };
+
+    function selectMode(mode) {
+        currentMode = mode;
+        const btnSingle = document.getElementById('mode-single-btn');
+        const btnPvp = document.getElementById('mode-pvp-btn');
+        const p1OnlyBox = document.getElementById('p1-only-box');
+        const pvpBox = document.getElementById('pvp-box');
+
+        if (mode === 'single') {
+            btnSingle.classList.remove('opacity-60', 'bg-amber-50', 'border-amber-300', 'text-amber-800');
+            btnSingle.classList.add('bg-sky-100', 'border-sky-400', 'text-sky-800');
+            btnPvp.classList.add('opacity-60', 'bg-amber-50', 'border-amber-300', 'text-amber-800');
+            btnPvp.classList.remove('bg-amber-100', 'border-amber-400');
+            p1OnlyBox.classList.remove('hidden');
+            pvpBox.classList.add('hidden');
+        } else {
+            btnPvp.classList.remove('opacity-60', 'bg-amber-50', 'border-amber-300', 'text-amber-800');
+            btnPvp.classList.add('bg-amber-100', 'border-amber-400', 'text-amber-800');
+            btnSingle.classList.add('opacity-60');
+            btnSingle.classList.remove('bg-sky-100', 'border-sky-400');
+            p1OnlyBox.classList.add('hidden');
+            pvpBox.classList.remove('hidden');
+        }
     }
 
     function startGame() {
-        pName = document.getElementById('player-name').value.trim() || "小朋友";
-        document.getElementById('login-screen').classList.remove('active');
-        document.getElementById('game-screen').classList.add('active');
-        nextQuestion();
-        timerId = setInterval(() => {
-            timeLeft--;
-            document.getElementById('timer').innerText = timeLeft;
-            if (timeLeft <= 0) endGame();
-        }, 1000);
+        document.getElementById('setup-screen').classList.add('hidden');
+        timeLeft = 60;
+
+        if (currentMode === 'single') {
+            singleState.name = document.getElementById('p1-name-single').value.trim() || '小勇士';
+            singleState.correct = 0; singleState.wrong = 0;
+
+            document.getElementById('single-correct').innerText = '0';
+            document.getElementById('single-wrong').innerText = '0';
+            document.getElementById('single-timer').innerText = '60';
+            document.getElementById('single-player-tag').innerHTML = parseBpmf(`挑[ㄊㄧㄠˇ]戰[ㄓㄢˋ]者[ㄓㄜˇ]：${singleState.name}`);
+
+            document.getElementById('single-game-screen').classList.remove('hidden');
+            nextSingleQuestion();
+
+            timerId = setInterval(() => {
+                timeLeft--;
+                document.getElementById('single-timer').innerText = timeLeft;
+                if (timeLeft <= 0) endSingleGame();
+            }, 1000);
+
+        } else {
+            pvpState.p1.name = document.getElementById('p1-name-pvp').value.trim() || '玩家 1';
+            pvpState.p2.name = document.getElementById('p2-name-pvp').value.trim() || '玩家 2';
+            pvpState.p1.score = 0; pvpState.p1.wrong = 0;
+            pvpState.p2.score = 0; pvpState.p2.wrong = 0;
+
+            document.getElementById('p1-display-name').innerText = pvpState.p1.name;
+            document.getElementById('p2-display-name').innerText = pvpState.p2.name;
+            document.getElementById('p1-score').innerText = '0';
+            document.getElementById('p1-wrong').innerText = '0';
+            document.getElementById('p2-score').innerText = '0';
+            document.getElementById('p2-wrong').innerText = '0';
+            
+            updatePvpTimer(60);
+
+            document.getElementById('pvp-game-screen').classList.remove('hidden');
+            nextPvpQuestion(1);
+            nextPvpQuestion(2);
+
+            timerId = setInterval(() => {
+                timeLeft--;
+                updatePvpTimer(timeLeft);
+                if (timeLeft <= 0) endPvpGame();
+            }, 1000);
+        }
     }
 
-    function nextQuestion() {
-        hasErroredThisTurn = false;
+    function updatePvpTimer(time) {
+        document.getElementById('pvp-timer-desktop').innerText = time;
+        document.getElementById('pvp-timer-mobile').innerText = time;
+    }
+
+    // 單人模式邏輯
+    function nextSingleQuestion() {
+        singleState.hasErrored = false;
         const n1 = Math.floor(Math.random() * 8) + 2;
         const n2 = Math.floor(Math.random() * 8) + 2;
-        currentAnswer = n1 * n2;
-        document.getElementById('question-display').innerText = `${n1} × ${n2}`;
-        let opts = [currentAnswer];
-        while(opts.length < 3) {
-            let w = (Math.floor(Math.random() * 8) + 2) * (Math.floor(Math.random() * 8) + 2);
-            if(!opts.includes(w)) opts.push(w);
+        singleState.ans = n1 * n2;
+
+        document.getElementById('single-question').innerText = `${n1} × ${n2} = ?`;
+
+        let opts = [singleState.ans];
+        while (opts.length < 3) {
+            let fake = (Math.floor(Math.random() * 8) + 2) * (Math.floor(Math.random() * 8) + 2);
+            if (!opts.includes(fake)) opts.push(fake);
         }
         opts.sort(() => Math.random() - 0.5);
-        document.querySelectorAll('.option-btn').forEach((b, i) => {
+
+        const btns = document.querySelectorAll('.single-opt');
+        btns.forEach((b, i) => {
             b.innerText = opts[i];
-            b.className = 'option-btn';
+            b.className = 'single-opt btn-bubbly bg-sky-400 text-white text-4xl sm:text-6xl font-bold py-6 rounded-2xl border-b-8 border-sky-600';
             b.disabled = false;
         });
     }
 
-    function checkAnswer(idx) {
-        const btns = document.querySelectorAll('.option-btn');
-        const val = parseInt(btns[idx].innerText);
-        if(val === currentAnswer) {
-            if(!hasErroredThisTurn) {
-                correctTotal++;
-                document.getElementById('correct-count').innerText = correctTotal;
+    function checkSingleAnswer(idx) {
+        const btns = document.querySelectorAll('.single-opt');
+        const chosen = parseInt(btns[idx].innerText);
+
+        if (chosen === singleState.ans) {
+            if (!singleState.hasErrored) {
+                singleState.correct++;
+                document.getElementById('single-correct').innerText = singleState.correct;
             }
             btns[idx].classList.add('btn-correct');
-            setTimeout(nextQuestion, 250);
+            setTimeout(nextSingleQuestion, 200);
         } else {
-            wrongTotal++;
-            hasErroredThisTurn = true;
-            document.getElementById('wrong-count').innerText = wrongTotal;
+            singleState.wrong++;
+            singleState.hasErrored = true;
+            document.getElementById('single-wrong').innerText = singleState.wrong;
             btns[idx].classList.add('btn-wrong');
-            setTimeout(() => btns[idx].classList.remove('btn-wrong'), 800);
+            setTimeout(() => btns[idx].classList.remove('btn-wrong'), 500);
         }
     }
 
-    function endGame() {
-        clearInterval(timerId);
-        document.getElementById('game-screen').classList.remove('active');
-        document.getElementById('result-screen').classList.add('active');
-        let rate = (correctTotal + wrongTotal > 0) ? Math.round((correctTotal / (correctTotal + wrongTotal)) * 100) : 0;
-        
-        document.getElementById('end-title-large').innerHTML = parseBpmf("挑[ㄊㄧㄠˇ]戰[ㄓㄢˋ]結[ㄐㄧㄝˊ]束[ㄕㄨˋ]");
-        document.getElementById('final-name').innerHTML = `<span style="color:#ad1457; font-weight:bold;">${pName}</span>` + parseBpmf("同[ㄊㄨㄥˊ]學[ㄒㄩㄝˊ]：");
-        document.getElementById('line-1').innerHTML = parseBpmf("答[ㄉㄚˊ]對[ㄉㄨㄟˋ]題[ㄊㄧˊ]數[ㄕㄨˋ]：") + `<span class="score-num">${correctTotal}</span>` + parseBpmf("題[ㄊㄧˊ]");
-        document.getElementById('line-2').innerHTML = parseBpmf("答[ㄉㄚˊ]錯[ㄘㄨㄛˋ]次[ㄘˋ]數[ㄕㄨˋ]：") + `<span class="score-num">${wrongTotal}</span>` + parseBpmf("次[ㄘˋ]");
-        document.getElementById('line-3').innerHTML = parseBpmf("準[ㄓㄨㄣˇ]確[ㄑㄩㄝˋ]率[ㄌㄩˋ]：") + `<span class="score-num">${rate}</span> %`;
-        document.getElementById('btn-restart').innerHTML = parseBpmf("再[ㄗㄞˋ]玩[ㄨㄢˊ]一[ㄧ]次[ㄘˋ]");
+    // 雙人對戰邏輯
+    function nextPvpQuestion(playerNum) {
+        const pState = (playerNum === 1) ? pvpState.p1 : pvpState.p2;
+        pState.errored = false;
+
+        const n1 = Math.floor(Math.random() * 8) + 2;
+        const n2 = Math.floor(Math.random() * 8) + 2;
+        pState.ans = n1 * n2;
+
+        document.getElementById(`p${playerNum}-question`).innerText = `${n1} × ${n2} = ?`;
+
+        let opts = [pState.ans];
+        while (opts.length < 3) {
+            let fake = (Math.floor(Math.random() * 8) + 2) * (Math.floor(Math.random() * 8) + 2);
+            if (!opts.includes(fake)) opts.push(fake);
+        }
+        opts.sort(() => Math.random() - 0.5);
+
+        const btns = document.querySelectorAll(`.p${playerNum}-opt`);
+        const bgStyle = playerNum === 1 ? 'bg-rose-400 border-rose-600' : 'bg-teal-500 border-teal-700';
+        btns.forEach((b, i) => {
+            b.innerText = opts[i];
+            b.className = `p${playerNum}-opt btn-bubbly ${bgStyle} text-white text-3xl sm:text-5xl font-bold py-4 sm:py-6 rounded-2xl border-b-4`;
+            b.disabled = false;
+        });
     }
 
-    window.onload = init;
+    function checkPvpAnswer(playerNum, idx) {
+        const pState = (playerNum === 1) ? pvpState.p1 : pvpState.p2;
+        const btns = document.querySelectorAll(`.p${playerNum}-opt`);
+        const chosen = parseInt(btns[idx].innerText);
+
+        if (chosen === pState.ans) {
+            if (!pState.errored) {
+                pState.score += 10;
+                document.getElementById(`p${playerNum}-score`).innerText = pState.score;
+            }
+            btns[idx].classList.add('btn-correct');
+            setTimeout(() => nextPvpQuestion(playerNum), 180);
+        } else {
+            pState.wrong++;
+            pState.errored = true;
+            document.getElementById(`p${playerNum}-wrong`).innerText = pState.wrong;
+            btns[idx].classList.add('btn-wrong');
+            setTimeout(() => btns[idx].classList.remove('btn-wrong'), 500);
+        }
+    }
+
+    // 結算與重置
+    function endSingleGame() {
+        clearInterval(timerId);
+        document.getElementById('single-game-screen').classList.add('hidden');
+        document.getElementById('result-screen').classList.remove('hidden');
+
+        const total = singleState.correct + singleState.wrong;
+        const rate = total > 0 ? Math.round((singleState.correct / total) * 100) : 0;
+
+        document.getElementById('result-title').innerHTML = parseBpmf('挑[ㄊㄧㄠˇ]戰[ㄓㄢˋ]結[ㄐㄧㄝˊ]束[ㄕㄨˋ]');
+        document.getElementById('winner-announcement').classList.add('hidden');
+
+        document.getElementById('result-stats-box').innerHTML = `
+            <div class="text-sky-800 font-bold border-b pb-2">
+                <span class="bpmf-text">玩[ㄨㄢˊ]家[ㄐㄧㄚ]名[ㄇㄧㄥˊ]字[ㄗˋ]：</span><span class="text-sky-600">${singleState.name}</span>
+            </div>
+            <div class="flex justify-between items-center text-emerald-700">
+                <span class="bpmf-text">答[ㄉㄚˊ]對[ㄉㄨㄟˋ]題[ㄊㄧˊ]數[ㄕㄨˋ]：</span>
+                <span class="font-extrabold text-3xl">${singleState.correct} <span class="text-base bpmf-text">題[ㄊㄧˊ]</span></span>
+            </div>
+            <div class="flex justify-between items-center text-rose-600">
+                <span class="bpmf-text">答[ㄉㄚˊ]錯[ㄘㄨㄛˋ]次[ㄘˋ]數[ㄕㄨˋ]：</span>
+                <span class="font-extrabold text-3xl">${singleState.wrong} <span class="text-base bpmf-text">次[ㄘˋ]</span></span>
+            </div>
+            <div class="flex justify-between items-center text-amber-600">
+                <span class="bpmf-text">準[ㄓㄨㄣˇ]確[ㄑㄩㄝˋ]率[ㄌㄩˋ]：</span>
+                <span class="font-extrabold text-3xl">${rate}%</span>
+            </div>
+        `;
+        renderAllBpmfText();
+    }
+
+    function endPvpGame() {
+        clearInterval(timerId);
+        document.getElementById('pvp-game-screen').classList.add('hidden');
+        document.getElementById('result-screen').classList.remove('hidden');
+
+        document.getElementById('result-title').innerHTML = parseBpmf('對[ㄉㄨㄟˋ]戰[ㄓㄢˋ]結[ㄐㄧㄝˊ]果[ㄍㄨㄛˇ]');
+        const announceBox = document.getElementById('winner-announcement');
+        announceBox.classList.remove('hidden');
+
+        const p1 = pvpState.p1;
+        const p2 = pvpState.p2;
+
+        if (p1.score > p2.score) {
+            announceBox.innerHTML = parseBpmf(`👑 恭[ㄍㄨㄥ]喜[ㄒㄧ] <span class="text-rose-600">${p1.name}</span> 獲[ㄏㄨㄛˋ]勝[ㄕㄥˋ]！ 🎉`);
+        } else if (p2.score > p1.score) {
+            announceBox.innerHTML = parseBpmf(`👑 恭[恭]喜[ㄒㄧ] <span class="text-teal-600">${p2.name}</span> 獲[ㄏㄨㄛˋ]勝[ㄕㄥˋ]！ 🎉`);
+        } else {
+            announceBox.innerHTML = parseBpmf(`🤝 勢[ㄕˋ]均[ㄐㄩㄣ]力[ㄌㄧˋ]敵[ㄉㄧˊ]！平[ㄆㄧㄥˊ]手[ㄕㄡˇ]！`);
+        }
+
+        document.getElementById('result-stats-box').innerHTML = `
+            <div class="grid grid-cols-2 gap-4 text-center">
+                <!-- 左側玩家結果 -->
+                <div class="bg-rose-50 p-4 rounded-2xl border-2 border-rose-200">
+                    <div class="font-bold text-rose-800 text-2xl mb-1">${p1.name}</div>
+                    <div class="text-rose-600 text-lg"><span class="bpmf-text">得[ㄉㄜˊ]分[ㄈㄣ]：</span><span class="text-3xl font-black">${p1.score}</span></div>
+                    <div class="text-gray-500 text-base mt-1"><span class="bpmf-text">失[ㄕ]誤[ㄨˋ]：</span>${p1.wrong} <span class="bpmf-text">次[ㄘˋ]</span></div>
+                </div>
+                <!-- 右側玩家結果 -->
+                <div class="bg-teal-50 p-4 rounded-2xl border-2 border-teal-200">
+                    <div class="font-bold text-teal-800 text-2xl mb-1">${p2.name}</div>
+                    <div class="text-teal-600 text-lg"><span class="bpmf-text">得[ㄉㄜˊ]分[ㄈㄣ]：</span><span class="text-3xl font-black">${p2.score}</span></div>
+                    <div class="text-gray-500 text-base mt-1"><span class="bpmf-text">失[ㄕ]誤[ㄨˋ]：</span>${p2.wrong} <span class="bpmf-text">次[ㄘˋ]</span></div>
+                </div>
+            </div>
+        `;
+        renderAllBpmfText();
+    }
+
+    function resetToHome() {
+        document.getElementById('result-screen').classList.add('hidden');
+        document.getElementById('setup-screen').classList.remove('hidden');
+    }
+
+    window.onload = function() {
+        document.getElementById('main-title').innerHTML = parseBpmf('九[ㄐㄧㄡˇ]九[ㄐㄧㄡˇ]乘[ㄔㄥˊ]法[ㄈㄚˇ]大[ㄉㄚˋ]挑[ㄊㄧㄠˇ]戰[ㄓㄢˋ]');
+        renderAllBpmfText();
+    };
 </script>
 </body>
 </html>
