@@ -60,6 +60,9 @@
             .no-print {
                 display: none !important;
             }
+            #worksheet-zoom-wrapper {
+                transform: none !important;
+            }
             .a4-page-preview {
                 width: 210mm !important;
                 height: 297mm !important;
@@ -78,7 +81,6 @@
                 page-break-after: avoid;
                 break-after: avoid;
             }
-            /* Hide hover action buttons in print */
             .problem-actions {
                 display: none !important;
             }
@@ -113,6 +115,22 @@
         input[type='number'] {
             -moz-appearance: textfield;
         }
+
+        /* Custom Scrollbar for Sidebar */
+        .custom-sidebar-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-sidebar-scroll::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+        .custom-sidebar-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 8px;
+        }
+        .custom-sidebar-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
@@ -126,7 +144,7 @@
                 </div>
                 <div>
                     <h1 class="text-lg font-bold leading-tight">直式計算練習單生成器</h1>
-                    <p class="text-xs text-slate-400">客製化多位數乘法練習單與學習網格</p>
+                    <p class="text-xs text-slate-400">客製化多位數與混合題型乘法練習單</p>
                 </div>
             </div>
             
@@ -134,9 +152,18 @@
                 <button id="btn-generate" onclick="generateAllQuestions()" class="bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 font-bold px-4 py-2 rounded-lg shadow flex items-center gap-2 transition duration-150 text-sm">
                     <i class="fa-solid fa-rotate"></i> 重新產生題目
                 </button>
-                <button id="btn-toggle-answer" onclick="toggleAnswerKey()" class="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-medium px-4 py-2 rounded-lg shadow flex items-center gap-2 transition duration-150 text-sm">
-                    <i class="fa-solid fa-file-circle-check"></i> <span id="answer-toggle-text">加入解答頁</span>
-                </button>
+
+                <!-- Answer Key Control Group -->
+                <div class="flex items-center gap-1 bg-slate-800 p-1 rounded-lg border border-slate-700">
+                    <button id="btn-toggle-answer" onclick="toggleAnswerKey()" class="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-medium px-3 py-1.5 rounded-md shadow flex items-center gap-1.5 transition duration-150 text-sm">
+                        <i class="fa-solid fa-file-circle-check"></i> <span id="answer-toggle-text">加入解答頁</span>
+                    </button>
+                    <select id="header-answer-mode" onchange="changeAnswerMode(this.value)" class="bg-slate-900 text-slate-200 text-xs rounded-md p-1.5 border border-slate-700 focus:outline-none font-medium cursor-pointer">
+                        <option value="detailed">詳答 (直式過程)</option>
+                        <option value="compact">簡答 (快速對照)</option>
+                    </select>
+                </div>
+
                 <button onclick="window.print()" class="bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold px-5 py-2 rounded-lg shadow flex items-center gap-2 transition duration-150 text-sm">
                     <i class="fa-solid fa-print"></i> 列印 / 另存PDF
                 </button>
@@ -148,14 +175,25 @@
     <div class="flex-1 max-w-7xl w-full mx-auto p-4 flex flex-col lg:flex-row gap-6">
         
         <!-- Left Sidebar Options Panel -->
-        <aside class="no-print w-full lg:w-80 flex-shrink-0 bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-6 h-fit sticky lg:top-20">
+        <aside class="no-print w-full lg:w-80 flex-shrink-0 bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-6 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto custom-sidebar-scroll">
             <div>
-                <h2 class="text-base font-bold text-slate-900 border-b border-slate-200 pb-2 flex items-center gap-2">
-                    <i class="fa-solid fa-sliders text-brand-500"></i> 題目屬性設定
-                </h2>
+                <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                    <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-brand-500"></i> 題目屬性設定
+                    </h2>
+                </div>
                 
-                <div class="mt-4 space-y-4 text-sm">
-                    <!-- Multiplicand & Multiplier Digits -->
+                <!-- Mixed Mode Switch Option -->
+                <div class="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                    <label class="flex items-center gap-2 font-bold text-amber-900 text-sm cursor-pointer">
+                        <input type="checkbox" id="mixed-mode-toggle" onchange="toggleMixedMode()" class="w-4 h-4 text-amber-600 rounded focus:ring-amber-500">
+                        開啟「混合題目」模式
+                    </label>
+                    <p class="text-xs text-amber-700 mt-1">勾選後可混合不同位數的乘法題型（如 2位×1位 + 3位×2位）。</p>
+                </div>
+
+                <!-- Mode A: Single Standard Mode Settings -->
+                <div id="single-mode-controls" class="mt-4 space-y-4 text-sm">
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block font-medium text-slate-700 mb-1">被乘數 (上)</label>
@@ -177,12 +215,33 @@
                         </div>
                     </div>
 
-                    <!-- Total Questions & Layout -->
                     <div>
                         <label class="block font-medium text-slate-700 mb-1">題目總數量</label>
                         <input type="number" id="total-questions" value="6" min="1" max="48" onchange="generateAllQuestions()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-medium focus:ring-2 focus:ring-brand-500 focus:outline-none">
                     </div>
+                </div>
 
+                <!-- Mode B: Mixed Mode Dynamic Rule List -->
+                <div id="mixed-mode-controls" class="mt-4 space-y-3 text-sm hidden">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-slate-700">混合題型清單：</span>
+                        <button onclick="addMixedSpecRow()" class="text-xs bg-slate-100 hover:bg-brand-50 text-brand-600 font-bold px-2 py-1 rounded border border-brand-200 flex items-center gap-1 transition">
+                            <i class="fa-solid fa-plus"></i> 增加一種題型
+                        </button>
+                    </div>
+
+                    <div id="mixed-specs-list" class="space-y-2 max-h-60 overflow-y-auto pr-1 custom-sidebar-scroll">
+                        <!-- Dynamic Mixed Rule Rows Rendered Here -->
+                    </div>
+
+                    <div class="p-2 bg-slate-100 rounded text-xs text-slate-600 flex justify-between items-center">
+                        <span>目前混合總題數：</span>
+                        <span id="mixed-total-count" class="font-bold text-slate-900 text-sm">0 題</span>
+                    </div>
+                </div>
+
+                <!-- Shared Layout Options -->
+                <div class="mt-4 pt-4 border-t border-slate-200 space-y-4 text-sm">
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block font-medium text-slate-700 mb-1">每頁題數</label>
@@ -201,6 +260,28 @@
                                 <option value="3" selected>3 欄</option>
                             </select>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Answer Key Settings Section -->
+            <div class="pt-2 border-t border-slate-200">
+                <h2 class="text-base font-bold text-slate-900 border-b border-slate-200 pb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-file-circle-check text-indigo-600"></i> 解答頁設定
+                </h2>
+
+                <div class="mt-3 space-y-3 text-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="font-medium text-slate-700">顯示解答頁</span>
+                        <input type="checkbox" id="sidebar-answer-toggle" onchange="toggleAnswerKeyFromSidebar()" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 cursor-pointer">
+                    </div>
+
+                    <div>
+                        <label class="block font-medium text-slate-700 mb-1">解答頁形式</label>
+                        <select id="sidebar-answer-mode" onchange="changeAnswerMode(this.value)" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <option value="detailed">詳答 (完整直式計算過程)</option>
+                            <option value="compact">簡答 (快速對答案表)</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -268,14 +349,38 @@
 
             <div class="p-3 bg-sky-50 rounded-lg border border-sky-200 text-xs text-sky-800 space-y-1">
                 <p class="font-bold flex items-center gap-1"><i class="fa-solid fa-circle-info"></i> 提示說明</p>
-                <p>列印時請在瀏覽器列印設定中，將「邊界」設定為<b>「無」</b>或<b>「預設」</b>，並勾選<b>「背景圖形」</b>以確保格子線條完美顯示。</p>
+                <p>列印時請將邊界設為<b>「無」</b>或<b>「預設」</b>，並勾選<b>「背景圖形」</b>以顯示完美格子。</p>
             </div>
         </aside>
 
         <!-- Right Side: A4 Worksheet Pages Workspace -->
-        <main class="flex-1 overflow-x-auto pb-12">
-            <div id="worksheet-container" class="flex flex-col items-center">
-                <!-- Pages will be rendered dynamically here -->
+        <main class="flex-1 overflow-x-auto pb-12 flex flex-col items-center">
+            
+            <!-- Zoom Controls Header Toolbar -->
+            <div class="no-print w-full max-w-4xl flex justify-between items-center mb-3 px-2">
+                <div class="text-sm font-bold text-slate-600 flex items-center gap-2">
+                    <i class="fa-solid fa-file-lines text-brand-500"></i> A4 學習單預覽
+                </div>
+                <div class="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl shadow-sm border border-slate-200">
+                    <span class="text-xs text-slate-500 font-medium mr-1"><i class="fa-solid fa-magnifying-glass"></i> 縮放：</span>
+                    <button onclick="adjustZoom(-10)" title="縮小 (50%-150%)" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold flex items-center justify-center transition">
+                        <i class="fa-solid fa-minus text-xs"></i>
+                    </button>
+                    <span id="zoom-value" class="w-12 text-center text-xs font-bold text-slate-800">100%</span>
+                    <button onclick="adjustZoom(10)" title="放大 (50%-150%)" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold flex items-center justify-center transition">
+                        <i class="fa-solid fa-plus text-xs"></i>
+                    </button>
+                    <button onclick="resetZoom()" title="重設為 100%" class="ml-1 text-xs px-2.5 py-1 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-600 rounded-lg font-bold transition">
+                        100%
+                    </button>
+                </div>
+            </div>
+
+            <!-- Scalable Worksheet Area -->
+            <div id="worksheet-zoom-wrapper" class="w-full flex justify-center transition-transform duration-200 origin-top">
+                <div id="worksheet-container" class="flex flex-col items-center">
+                    <!-- Pages will be rendered dynamically here -->
+                </div>
             </div>
         </main>
 
@@ -283,7 +388,7 @@
 
     <!-- Website Bottom Footer -->
     <footer class="no-print bg-slate-900 text-slate-400 py-4 text-center text-sm border-t border-slate-800">
-        <p>直式計算練習單生成器 ｜ 玉珽老師的遊戲教室 編</p>
+        <p>直式計算練習單生成器 ｜ 玉珽老師編</p>
     </footer>
 
     <script>
@@ -292,11 +397,176 @@
         let globalCols = 5;
         let globalRows = 8;
         let showAnswerKey = false;
+        let answerKeyMode = 'detailed'; // 'detailed' or 'compact'
+        let isMixedMode = false;
+        let currentZoom = 100;
+
+        // Default Mixed Mode Rules List
+        let mixedSpecs = [
+            { num1Digits: 2, num2Digits: 1, count: 3 },
+            { num1Digits: 3, num2Digits: 2, count: 3 }
+        ];
+
+        function adjustZoom(delta) {
+            currentZoom = Math.max(50, Math.min(150, currentZoom + delta));
+            applyZoom();
+        }
+
+        function resetZoom() {
+            currentZoom = 100;
+            applyZoom();
+        }
+
+        function applyZoom() {
+            const wrapper = document.getElementById('worksheet-zoom-wrapper');
+            const zoomText = document.getElementById('zoom-value');
+            if (wrapper) {
+                wrapper.style.transform = `scale(${currentZoom / 100})`;
+            }
+            if (zoomText) {
+                zoomText.innerText = `${currentZoom}%`;
+            }
+        }
 
         // Initialize default configuration
         window.addEventListener('DOMContentLoaded', () => {
+            renderMixedSpecsUI();
             generateAllQuestions();
         });
+
+        function changeAnswerMode(mode) {
+            answerKeyMode = mode;
+            const headerSelect = document.getElementById('header-answer-mode');
+            const sidebarSelect = document.getElementById('sidebar-answer-mode');
+            if (headerSelect) headerSelect.value = mode;
+            if (sidebarSelect) sidebarSelect.value = mode;
+            renderWorksheetPages();
+        }
+
+        function toggleAnswerKeyFromSidebar() {
+            const checkbox = document.getElementById('sidebar-answer-toggle');
+            showAnswerKey = checkbox.checked;
+            updateAnswerKeyButtons();
+            renderWorksheetPages();
+        }
+
+        function toggleAnswerKey() {
+            showAnswerKey = !showAnswerKey;
+            updateAnswerKeyButtons();
+            renderWorksheetPages();
+        }
+
+        function updateAnswerKeyButtons() {
+            const btnText = document.getElementById('answer-toggle-text');
+            const btn = document.getElementById('btn-toggle-answer');
+            const sidebarCheckbox = document.getElementById('sidebar-answer-toggle');
+
+            if (sidebarCheckbox) sidebarCheckbox.checked = showAnswerKey;
+            
+            if (showAnswerKey) {
+                if (btnText) btnText.innerText = "移除解答頁";
+                if (btn) {
+                    btn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+                    btn.classList.add('bg-rose-600', 'hover:bg-rose-700');
+                }
+            } else {
+                if (btnText) btnText.innerText = "加入解答頁";
+                if (btn) {
+                    btn.classList.remove('bg-rose-600', 'hover:bg-rose-700');
+                    btn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+                }
+            }
+        }
+
+        // Toggle Mixed Mode Visibility & Regeneration
+        function toggleMixedMode() {
+            isMixedMode = document.getElementById('mixed-mode-toggle').checked;
+            const singleControls = document.getElementById('single-mode-controls');
+            const mixedControls = document.getElementById('mixed-mode-controls');
+
+            if (isMixedMode) {
+                singleControls.classList.add('hidden');
+                mixedControls.classList.remove('hidden');
+            } else {
+                singleControls.classList.remove('hidden');
+                mixedControls.classList.add('hidden');
+            }
+            generateAllQuestions();
+        }
+
+        // Render Mixed Mode Rules UI List
+        function renderMixedSpecsUI() {
+            const container = document.getElementById('mixed-specs-list');
+            container.innerHTML = '';
+
+            let totalCount = 0;
+
+            mixedSpecs.forEach((spec, idx) => {
+                totalCount += spec.count;
+
+                const row = document.createElement('div');
+                row.className = 'p-2.5 bg-slate-50 border border-slate-200 rounded-lg space-y-2 relative';
+
+                row.innerHTML = `
+                    <div class="flex items-center justify-between text-xs font-bold text-slate-600">
+                        <span>項次 ${idx + 1}</span>
+                        ${mixedSpecs.length > 1 ? `
+                            <button onclick="removeMixedSpecRow(${idx})" class="text-rose-500 hover:text-rose-700 text-xs flex items-center gap-1 font-normal">
+                                <i class="fa-solid fa-trash-can"></i> 刪除
+                            </button>
+                        ` : ''}
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-0.5">被乘數</label>
+                            <select onchange="updateMixedSpec(${idx}, 'num1Digits', this.value)" class="w-full bg-white border border-slate-300 rounded p-1 text-xs font-medium">
+                                <option value="1" ${spec.num1Digits === 1 ? 'selected' : ''}>1位數</option>
+                                <option value="2" ${spec.num1Digits === 2 ? 'selected' : ''}>2位數</option>
+                                <option value="3" ${spec.num1Digits === 3 ? 'selected' : ''}>3位數</option>
+                                <option value="4" ${spec.num1Digits === 4 ? 'selected' : ''}>4位數</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-0.5">乘數</label>
+                            <select onchange="updateMixedSpec(${idx}, 'num2Digits', this.value)" class="w-full bg-white border border-slate-300 rounded p-1 text-xs font-medium">
+                                <option value="1" ${spec.num2Digits === 1 ? 'selected' : ''}>1位數</option>
+                                <option value="2" ${spec.num2Digits === 2 ? 'selected' : ''}>2位數</option>
+                                <option value="3" ${spec.num2Digits === 3 ? 'selected' : ''}>3位數</option>
+                                <option value="4" ${spec.num2Digits === 4 ? 'selected' : ''}>4位數</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-0.5">數量(題)</label>
+                            <input type="number" min="1" max="20" value="${spec.count}" onchange="updateMixedSpec(${idx}, 'count', this.value)" class="w-full bg-white border border-slate-300 rounded p-1 text-xs font-medium">
+                        </div>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+
+            document.getElementById('mixed-total-count').innerText = `${totalCount} 題`;
+        }
+
+        function addMixedSpecRow() {
+            mixedSpecs.push({ num1Digits: 2, num2Digits: 2, count: 2 });
+            renderMixedSpecsUI();
+            generateAllQuestions();
+        }
+
+        function removeMixedSpecRow(index) {
+            if (mixedSpecs.length > 1) {
+                mixedSpecs.splice(index, 1);
+                renderMixedSpecsUI();
+                generateAllQuestions();
+            }
+        }
+
+        function updateMixedSpec(index, field, value) {
+            mixedSpecs[index][field] = parseInt(value, 10) || 1;
+            renderMixedSpecsUI();
+            generateAllQuestions();
+        }
 
         // Generate random integer in range [min, max]
         function getRandomInt(min, max) {
@@ -313,33 +583,68 @@
 
         // Master function to generate questions
         function generateAllQuestions() {
-            const multiplicandDigits = parseInt(document.getElementById('multiplicand-digits').value, 10);
-            const multiplierDigits = parseInt(document.getElementById('multiplier-digits').value, 10);
-            const total = parseInt(document.getElementById('total-questions').value, 10) || 6;
+            questionsData = [];
+            let maxReqCols = 5;
+            let maxReqRows = 7;
 
-            // Update default grid size based on digit count
-            const requiredCols = Math.max(multiplicandDigits + multiplierDigits + 1, multiplicandDigits + 2, 5);
-            const requiredRows = multiplierDigits + multiplicandDigits + 3;
+            if (isMixedMode) {
+                let qCounter = 1;
+                mixedSpecs.forEach(spec => {
+                    const reqCols = Math.max(spec.num1Digits + spec.num2Digits + 1, spec.num1Digits + 2, 5);
+                    const reqRows = spec.num2Digits + spec.num1Digits + 3;
 
-            globalCols = Math.max(requiredCols, 5);
-            globalRows = Math.max(requiredRows, 7);
+                    if (reqCols > maxReqCols) maxReqCols = reqCols;
+                    if (reqRows > maxReqRows) maxReqRows = reqRows;
+
+                    for (let i = 0; i < spec.count; i++) {
+                        const num1 = generateNumberByDigits(spec.num1Digits);
+                        const num2 = generateNumberByDigits(spec.num2Digits);
+                        questionsData.push({
+                            id: qCounter++,
+                            num1: num1,
+                            num2: num2,
+                            num1Digits: spec.num1Digits,
+                            num2Digits: spec.num2Digits,
+                            answer: num1 * num2,
+                            cols: globalCols,
+                            rows: globalRows
+                        });
+                    }
+                });
+            } else {
+                const multiplicandDigits = parseInt(document.getElementById('multiplicand-digits').value, 10);
+                const multiplierDigits = parseInt(document.getElementById('multiplier-digits').value, 10);
+                const total = parseInt(document.getElementById('total-questions').value, 10) || 6;
+
+                maxReqCols = Math.max(multiplicandDigits + multiplierDigits + 1, multiplicandDigits + 2, 5);
+                maxReqRows = multiplierDigits + multiplicandDigits + 3;
+
+                for (let i = 0; i < total; i++) {
+                    const num1 = generateNumberByDigits(multiplicandDigits);
+                    const num2 = generateNumberByDigits(multiplierDigits);
+                    questionsData.push({
+                        id: i + 1,
+                        num1: num1,
+                        num2: num2,
+                        num1Digits: multiplicandDigits,
+                        num2Digits: multiplierDigits,
+                        answer: num1 * num2,
+                        cols: globalCols,
+                        rows: globalRows
+                    });
+                }
+            }
+
+            globalCols = Math.max(maxReqCols, 5);
+            globalRows = Math.max(maxReqRows, 7);
 
             document.getElementById('global-cols-val').innerText = globalCols;
             document.getElementById('global-rows-val').innerText = globalRows;
 
-            questionsData = [];
-            for (let i = 0; i < total; i++) {
-                const num1 = generateNumberByDigits(multiplicandDigits);
-                const num2 = generateNumberByDigits(multiplierDigits);
-                questionsData.push({
-                    id: i + 1,
-                    num1: num1,
-                    num2: num2,
-                    answer: num1 * num2,
-                    cols: globalCols,
-                    rows: globalRows
-                });
-            }
+            questionsData.forEach(q => {
+                q.cols = globalCols;
+                q.rows = globalRows;
+            });
 
             renderWorksheetPages();
         }
@@ -373,32 +678,13 @@
         }
 
         function regenerateSingleQuestion(qIndex) {
-            const multiplicandDigits = parseInt(document.getElementById('multiplicand-digits').value, 10);
-            const multiplierDigits = parseInt(document.getElementById('multiplier-digits').value, 10);
+            const q = questionsData[qIndex];
+            const num1 = generateNumberByDigits(q.num1Digits || 2);
+            const num2 = generateNumberByDigits(q.num2Digits || 2);
             
-            const num1 = generateNumberByDigits(multiplicandDigits);
-            const num2 = generateNumberByDigits(multiplierDigits);
-            
-            questionsData[qIndex].num1 = num1;
-            questionsData[qIndex].num2 = num2;
-            questionsData[qIndex].answer = num1 * num2;
-            renderWorksheetPages();
-        }
-
-        function toggleAnswerKey() {
-            showAnswerKey = !showAnswerKey;
-            const btnText = document.getElementById('answer-toggle-text');
-            const btn = document.getElementById('btn-toggle-answer');
-            
-            if (showAnswerKey) {
-                btnText.innerText = "移除解答頁";
-                btn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
-                btn.classList.add('bg-rose-600', 'hover:bg-rose-700');
-            } else {
-                btnText.innerText = "加入解答頁";
-                btn.classList.remove('bg-rose-600', 'hover:bg-rose-700');
-                btn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
-            }
+            q.num1 = num1;
+            q.num2 = num2;
+            q.answer = num1 * num2;
             renderWorksheetPages();
         }
 
@@ -419,6 +705,11 @@
         }
 
         function createGridHTML(q, qIndex, isAnswerSheet = false) {
+            // Detailed answer mode with full calculation process
+            if (isAnswerSheet && answerKeyMode === 'detailed') {
+                return createDetailedGridHTML(q);
+            }
+
             const fillNumbers = document.getElementById('fill-numbers-toggle').checked;
             const num1Str = q.num1.toString();
             const num2Str = q.num2.toString();
@@ -436,32 +727,20 @@
                     let cellChar = '';
 
                     if (fillNumbers) {
-                        // Row 0: Multiplicand aligned to the right
+                        // Row 0: Multiplicand aligned right
                         if (r === 0) {
                             const charIdx = num1Str.length - (cols - c);
                             if (charIdx >= 0) {
                                 cellChar = num1Str[charIdx];
                             }
                         }
-                        // Row 1: Multiplier aligned to right, '×' placed at the leftmost column (c === 0)
+                        // Row 1: Multiplier aligned right, '×' placed at column 0
                         else if (r === 1) {
                             const charIdx = num2Str.length - (cols - c);
                             if (charIdx >= 0) {
                                 cellChar = num2Str[charIdx];
                             } else if (c === 0) {
                                 cellChar = '×';
-                            }
-                        }
-                    }
-
-                    // Answer key mode: render answer steps or final answer if requested
-                    if (isAnswerSheet) {
-                        // If answer key mode, fill answer at bottom row
-                        if (r === rows - 1) {
-                            const ansStr = q.answer.toString();
-                            const ansCharIdx = ansStr.length - (cols - c);
-                            if (ansCharIdx >= 0) {
-                                cellChar = `<span class="text-rose-600 font-bold">${ansStr[ansCharIdx]}</span>`;
                             }
                         }
                     }
@@ -475,6 +754,101 @@
             return html;
         }
 
+        // Detailed Vertical Calculation Matrix Generator
+        function createDetailedGridHTML(q) {
+            const num1Str = q.num1.toString();
+            const num2Str = q.num2.toString();
+            const cols = q.cols;
+            const rows = q.rows;
+            const num2Digits = num2Str.length;
+
+            let matrix = Array.from({ length: rows }, () => Array.from({ length: cols }, () => ({ char: '', isAns: false, isBorderBottom: false })));
+
+            // Row 0: Multiplicand
+            for (let c = 0; c < cols; c++) {
+                const charIdx = num1Str.length - (cols - c);
+                if (charIdx >= 0) {
+                    matrix[0][c] = { char: num1Str[charIdx], isAns: false };
+                }
+            }
+
+            // Row 1: Multiplier with '×' at column 0
+            for (let c = 0; c < cols; c++) {
+                const charIdx = num2Str.length - (cols - c);
+                if (charIdx >= 0) {
+                    matrix[1][c] = { char: num2Str[charIdx], isAns: false };
+                } else if (c === 0) {
+                    matrix[1][c] = { char: '×', isAns: false };
+                }
+            }
+
+            if (num2Digits === 1) {
+                // 1-digit multiplier: Thick border under row 1, final answer on row 2
+                matrix[1].forEach(cell => cell.isBorderBottom = true);
+                const ansStr = q.answer.toString();
+                for (let c = 0; c < cols; c++) {
+                    const charIdx = ansStr.length - (cols - c);
+                    if (charIdx >= 0) {
+                        matrix[2][c] = { char: ansStr[charIdx], isAns: true };
+                    }
+                }
+            } else {
+                // Multi-digit multiplier: Partial products step-by-step
+                matrix[1].forEach(cell => cell.isBorderBottom = true);
+
+                for (let i = 0; i < num2Digits; i++) {
+                    const digit = parseInt(num2Str[num2Digits - 1 - i], 10);
+                    const partialProd = q.num1 * digit;
+                    const prodStr = partialProd.toString();
+                    const targetRow = 2 + i;
+
+                    if (targetRow < rows) {
+                        for (let c = 0; c < cols; c++) {
+                            const charIdx = prodStr.length - (cols - i - c);
+                            if (charIdx >= 0 && charIdx < prodStr.length) {
+                                matrix[targetRow][c] = { char: prodStr[charIdx], isAns: true };
+                            }
+                        }
+                    }
+                }
+
+                // Line under last partial product
+                const lastPartialRow = 1 + num2Digits;
+                if (lastPartialRow < rows) {
+                    matrix[lastPartialRow].forEach(cell => cell.isBorderBottom = true);
+                }
+
+                // Final sum row
+                const sumRow = 2 + num2Digits;
+                if (sumRow < rows) {
+                    const ansStr = q.answer.toString();
+                    for (let c = 0; c < cols; c++) {
+                        const charIdx = ansStr.length - (cols - c);
+                        if (charIdx >= 0) {
+                            matrix[sumRow][c] = { char: ansStr[charIdx], isAns: true };
+                        }
+                    }
+                }
+            }
+
+            // Generate HTML table
+            let html = `<table class="math-grid">`;
+            for (let r = 0; r < rows; r++) {
+                const borderClass = matrix[r][0].isBorderBottom ? 'border-bottom-thick' : '';
+                html += `<tr class="${borderClass}">`;
+                for (let c = 0; c < cols; c++) {
+                    const cell = matrix[r][c];
+                    const content = (cell.isAns && cell.char !== '') 
+                        ? `<span class="text-rose-600 font-bold">${cell.char}</span>` 
+                        : cell.char;
+                    html += `<td class="math-cell">${content}</td>`;
+                }
+                html += `</tr>`;
+            }
+            html += `</table>`;
+            return html;
+        }
+
         function renderWorksheetPages() {
             const container = document.getElementById('worksheet-container');
             container.innerHTML = '';
@@ -482,12 +856,11 @@
             const questionsPerPage = parseInt(document.getElementById('questions-per-page').value, 10);
             const colsCount = parseInt(document.getElementById('page-columns').value, 10);
             const totalQuestions = questionsData.length;
-            const totalStudentPages = Math.ceil(totalQuestions / questionsPerPage);
+            const totalStudentPages = Math.ceil(totalQuestions / questionsPerPage) || 1;
 
-            // Determine grid CSS class based on page column setting
             const gridColClass = colsCount === 2 ? 'grid-cols-2 gap-x-8 gap-y-6' : 'grid-cols-3 gap-x-5 gap-y-6';
 
-            // Function to generate page template
+            // Function to generate standard / detailed answer page
             const renderPage = (pageIdx, totalPages, isAnswerSheet = false) => {
                 const pageElement = document.createElement('div');
                 pageElement.className = 'a4-page-preview text-slate-900 flex flex-col justify-between';
@@ -505,7 +878,7 @@
                         <!-- Header Section -->
                         <div class="mb-4 text-center border-b pb-3">
                             <h2 class="text-2xl font-bold tracking-wide render-title">
-                                ${titleText} ${isAnswerSheet ? '<span class="text-rose-600 ml-2">(解答頁)</span>' : ''}
+                                ${titleText} ${isAnswerSheet ? '<span class="text-rose-600 ml-2">(詳答頁)</span>' : ''}
                             </h2>
                             <div class="flex justify-end gap-6 text-sm font-medium mt-2 px-2">
                                 <span class="render-name" style="display: ${showName ? 'inline' : 'none'};">姓名：______________</span>
@@ -520,7 +893,7 @@
 
                 pageQuestions.forEach((q, idx) => {
                     const qRealIndex = startIdx + idx;
-                    const displayAns = isAnswerSheet ? `<span class="text-rose-600 underline font-bold ml-1">${q.answer}</span>` : '_______';
+                    const displayAns = isAnswerSheet ? `<span class="text-rose-600 underline font-bold ml-1">${q.answer.toLocaleString()}</span>` : '_______';
 
                     pageHTML += `
                         <div class="problem-card relative p-2 border border-transparent rounded-lg hover:border-slate-300 transition-all group">
@@ -551,10 +924,10 @@
                         </div>
                     </div>
 
-                    <!-- Footer Page Number & Credit -->
+                    <!-- Footer Page Number & Teacher Credit -->
                     <div class="flex justify-between items-center text-xs text-slate-600 pt-2 border-t border-slate-200 mt-4">
-                        <span class="font-bold">玉珽老師的遊戲教室</span>
-                        <span>第 ${pageIdx + 1} / ${totalPages} 頁</span>
+                        <span class="font-bold">玉珽老師編</span>
+                        <span>${isAnswerSheet ? '詳答頁' : '學生頁'} ${pageIdx + 1} / ${totalPages} 頁</span>
                     </div>
                 `;
 
@@ -569,9 +942,66 @@
 
             // Render Answer Key Pages if enabled
             if (showAnswerKey) {
-                for (let p = 0; p < totalStudentPages; p++) {
-                    renderPage(p, totalStudentPages, true);
+                if (answerKeyMode === 'detailed') {
+                    // Render Detailed Grid Answer Pages
+                    for (let p = 0; p < totalStudentPages; p++) {
+                        renderPage(p, totalStudentPages, true);
+                    }
+                } else {
+                    // Render Compact Summary Answer Page
+                    renderCompactAnswerPages();
                 }
+            }
+        }
+
+        // Render Compact Summary Answer Key Page
+        function renderCompactAnswerPages() {
+            const container = document.getElementById('worksheet-container');
+            const titleText = document.getElementById('worksheet-title').value || "直式計算練習";
+            const itemsPerPage = 24; // Compact grid items per page
+            const totalAnsPages = Math.ceil(questionsData.length / itemsPerPage) || 1;
+
+            for (let p = 0; p < totalAnsPages; p++) {
+                const pageQuestions = questionsData.slice(p * itemsPerPage, (p + 1) * itemsPerPage);
+                const pageElement = document.createElement('div');
+                pageElement.className = 'a4-page-preview text-slate-900 flex flex-col justify-between';
+
+                let html = `
+                    <div>
+                        <!-- Header -->
+                        <div class="mb-6 text-center border-b pb-3">
+                            <h2 class="text-2xl font-bold tracking-wide render-title">
+                                ${titleText} <span class="text-rose-600 ml-2">(簡答對照表)</span>
+                            </h2>
+                            <p class="text-xs text-slate-500 mt-1">快速對答案與成績批改專用清單</p>
+                        </div>
+
+                        <!-- Compact 3-Column Answer Grid -->
+                        <div class="grid grid-cols-3 gap-3">
+                `;
+
+                pageQuestions.forEach(q => {
+                    html += `
+                        <div class="p-2.5 bg-rose-50/60 border border-rose-200 rounded-lg flex justify-between items-center text-sm font-bold">
+                            <span class="text-slate-700">(${q.id}) ${q.num1} × ${q.num2} =</span>
+                            <span class="text-rose-600 text-base font-extrabold underline ml-1">${q.answer.toLocaleString()}</span>
+                        </div>
+                    `;
+                });
+
+                html += `
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="flex justify-between items-center text-xs text-slate-600 pt-2 border-t border-slate-200 mt-4">
+                        <span class="font-bold">玉珽老師編</span>
+                        <span>簡答頁 ${p + 1} / ${totalAnsPages} 頁</span>
+                    </div>
+                `;
+
+                pageElement.innerHTML = html;
+                container.appendChild(pageElement);
             }
         }
     </script>
