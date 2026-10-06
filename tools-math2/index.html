@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>雙欄數學學習單生成器</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* A4 頁面與畫面顯示設定 */
+        @media screen {
+            .a4-page {
+                width: 210mm;
+                height: 297mm;
+                background-color: #ffffff;
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+                margin: 0 auto 2rem auto;
+                padding: 10mm 12mm 10mm 12mm;
+                box-sizing: border-box;
+                font-family: "BiauKai", "標楷體", "DFKai-SB", "PMingLiU", "新細明體", serif;
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            }
+        }
+
+        /* 修復多頁列印問題：解除高與溢出限制 */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 0;
+            }
+            
+            html, body {
+                width: 100% !important;
+                height: auto !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: visible !important;
+                background: white !important;
+            }
+
+            body, main, #worksheet-zoom-wrapper, #pages-container {
+                box-shadow: none !important;
+                font-family: "BiauKai", "標楷體", "DFKai-SB", "PMingLiU", "新細明體", serif !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                display: block !important;
+                height: auto !important;
+                overflow: visible !important;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            #worksheet-zoom-wrapper {
+                transform: none !important;
+            }
+
+            .a4-page {
+                width: 210mm !important;
+                height: 297mm !important;
+                padding: 10mm 12mm 10mm 12mm !important;
+                box-sizing: border-box !important;
+                margin: 0 auto !important;
+                box-shadow: none !important;
+                page-break-after: always !important;
+                break-after: page !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+                overflow: hidden !important;
+            }
+
+            .a4-page:last-child {
+                page-break-after: avoid !important;
+                break-after: avoid !important;
+            }
+        }
+
+        /* Word 雙線邊框 */
+        .word-double-line {
+            border-bottom: 3px double #000000;
+        }
+
+        /* 題目字體 */
+        .question-text {
+            font-size: 14pt !important;
+            line-height: 1.4;
+            font-weight: 500;
+        }
+
+        /* 內容容器：自動填滿剩餘高度 */
+        .page-content-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* 雙欄容器：垂直方向自動均分所有剩餘高度 */
+        .two-column-grid {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        /* 中間黑色欄位分隔線 */
+        .two-column-grid::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 1.5px;
+            background-color: #000000;
+            transform: translateX(-50%);
+        }
+
+        /* 每一列均分高度 */
+        .grid-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            column-gap: 1.5rem;
+            flex: 1;
+        }
+
+        .problem-item {
+            display: flex;
+            flex-direction: column;
+            padding-right: 0.5rem;
+        }
+
+        .problem-item:nth-child(even) {
+            padding-left: 0.5rem;
+            padding-right: 0;
+        }
+
+        /* 計算空間自動撐滿每一題內部 */
+        .calc-space {
+            flex: 1;
+            width: 100%;
+        }
+
+        /* 輔助橫線 */
+        .calc-space-lines {
+            background-image: repeating-linear-gradient(transparent, transparent 23px, #cbd5e1 24px);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-900 min-h-screen flex flex-col">
+
+    <!-- 操作控制列 -->
+    <header class="no-print bg-slate-900 text-white shadow-md sticky top-0 z-30 p-4">
+        <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid fa-gamepad text-amber-400 text-2xl"></i>
+                <div>
+                    <h1 class="text-lg font-bold leading-tight">雙欄數學學習單生成器</h1>
+                    <p class="text-xs text-amber-300 font-medium">玉珽老師的遊戲教室</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3 flex-wrap">
+                <button onclick="generateQuestions()" class="bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 font-bold px-4 py-2 rounded-lg shadow flex items-center gap-2 text-sm transition">
+                    <i class="fa-solid fa-dice"></i> 全卷重新出題
+                </button>
+
+                <button id="btn-toggle-answer" onclick="toggleAnswerPage()" class="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-medium px-4 py-2 rounded-lg shadow flex items-center gap-2 text-sm transition">
+                    <i class="fa-solid fa-check-double"></i> <span id="ans-btn-text">顯示簡答頁</span>
+                </button>
+
+                <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold px-5 py-2 rounded-lg shadow flex items-center gap-2 text-sm transition">
+                    <i class="fa-solid fa-print"></i> 列印 / 另存 PDF
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 側邊控制面板與主預覽區 -->
+    <div class="flex-1 max-w-7xl w-full mx-auto p-4 flex flex-col lg:flex-row gap-6">
+        
+        <!-- 左側面板 -->
+        <aside class="no-print w-full lg:w-96 bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-5 flex-shrink-0 h-fit">
+            <h2 class="font-bold border-b pb-2 text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-sliders text-blue-500"></i> 屬性設定
+            </h2>
+
+            <!-- 修改標題名稱 -->
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">學習單名稱</label>
+                <input type="text" id="input-title" value="數學練習卷" oninput="renderAll()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 font-medium">
+            </div>
+
+            <!-- 運算類型選單 -->
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">運算題型</label>
+                <select id="op-type" onchange="generateQuestions()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-sm font-medium">
+                    <option value="multiplication" selected>乘法 (×)</option>
+                    <option value="addition">加法 (+)</option>
+                    <option value="subtraction">減法 (-)</option>
+                    <option value="division">除法 (÷)</option>
+                    <option value="mixed">四則混合 (+ - × ÷)</option>
+                </select>
+            </div>
+
+            <!-- 每頁題數 -->
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">每頁題數</label>
+                <select id="input-per-page" onchange="renderAll()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-sm">
+                    <option value="8">8 題 (大計算空間)</option>
+                    <option value="10" selected>10 題 (標準最佳)</option>
+                    <option value="12">12 題 (較緊湊)</option>
+                </select>
+            </div>
+
+            <!-- 混合題目模式區塊 -->
+            <div class="bg-amber-50/70 border border-amber-200 rounded-xl p-3 space-y-3">
+                <label class="flex items-start gap-2 text-sm font-bold text-slate-800 cursor-pointer">
+                    <input type="checkbox" id="toggle-mix-mode" onchange="toggleMixModeUI()" class="mt-1 rounded text-amber-600 focus:ring-amber-500 w-4 h-4">
+                    <div>
+                        <span>開啟「混合題目」模式</span>
+                        <p class="text-xs text-amber-800 font-normal mt-0.5">勾選後可混合不同位數的題型組合（如 2位×1位 + 3位×2位）。</p>
+                    </div>
+                </label>
+
+                <!-- 混合題型列表（開啟混合模式時顯示） -->
+                <div id="mix-mode-container" class="hidden space-y-3 pt-2 border-t border-amber-200">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-bold text-slate-700">混合題型清單：</span>
+                        <button onclick="addMixConfigRow()" class="text-xs bg-white hover:bg-slate-50 text-blue-600 font-bold px-2.5 py-1.5 rounded-lg border border-slate-300 shadow-sm transition">
+                            + 增加一種題型
+                        </button>
+                    </div>
+
+                    <div id="mix-rows-list" class="space-y-2">
+                        <!-- 動態插入混合設定行 -->
+                    </div>
+
+                    <div class="bg-white p-2.5 rounded-lg border border-slate-200 flex justify-between items-center text-xs font-bold text-slate-700">
+                        <span>目前混合總題數：</span>
+                        <span class="text-sm text-blue-600"><span id="mix-total-count">8</span> 題</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 標準模式設定（關閉混合模式時顯示） -->
+            <div id="standard-mode-container" class="space-y-3">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">總題目數量</label>
+                    <input type="number" id="input-total-count" value="10" min="1" max="60" onchange="generateQuestions()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-sm">
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-slate-700">數字位數</label>
+                    <div class="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                            <span class="text-xs text-slate-500">前方數字</span>
+                            <select id="digits-1" onchange="generateQuestions()" class="w-full border rounded p-2 bg-slate-50 font-medium">
+                                <option value="1">1 位數</option>
+                                <option value="2" selected>2 位數</option>
+                                <option value="3">3 位數</option>
+                                <option value="4">4 位數</option>
+                            </select>
+                        </div>
+                        <div>
+                            <span class="text-xs text-slate-500">後方數字</span>
+                            <select id="digits-2" onchange="generateQuestions()" class="w-full border rounded p-2 bg-slate-50 font-medium">
+                                <option value="1">1 位數</option>
+                                <option value="2" selected>2 位數</option>
+                                <option value="3">3 位數</option>
+                                <option value="4">4 位數</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 計算區域引導線 -->
+            <div class="pt-2 border-t">
+                <label class="flex items-center gap-2 text-sm text-slate-700 font-medium cursor-pointer">
+                    <input type="checkbox" id="toggle-calc-lines" onchange="renderAll()" class="rounded text-blue-600">
+                    顯示輔助橫線 (預設為純留白)
+                </label>
+            </div>
+        </aside>
+
+        <!-- 右側 A4 頁面預覽區 -->
+        <main class="flex-1 flex flex-col items-center overflow-x-auto">
+            
+            <!-- 縮放控制列 -->
+            <div class="no-print w-full max-w-4xl flex justify-between items-center mb-3 px-2">
+                <div class="text-sm font-bold text-slate-600 flex items-center gap-2">
+                    <i class="fa-solid fa-file-lines text-blue-500"></i> A4 學習單預覽
+                </div>
+                <div class="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl shadow-sm border border-slate-200">
+                    <span class="text-xs text-slate-500 font-medium mr-1"><i class="fa-solid fa-magnifying-glass"></i> 縮放：</span>
+                    <button onclick="adjustZoom(-10)" title="縮小" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold flex items-center justify-center transition">
+                        <i class="fa-solid fa-minus text-xs"></i>
+                    </button>
+                    <span id="zoom-value" class="w-12 text-center text-xs font-bold text-slate-800">100%</span>
+                    <button onclick="adjustZoom(10)" title="放大" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold flex items-center justify-center transition">
+                        <i class="fa-solid fa-plus text-xs"></i>
+                    </button>
+                    <button onclick="resetZoom()" title="重設為 100%" class="ml-1 text-xs px-2.5 py-1 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-600 rounded-lg font-bold transition">
+                        100%
+                    </button>
+                </div>
+            </div>
+
+            <!-- 可縮放的學習單容器 -->
+            <div id="worksheet-zoom-wrapper" class="w-full flex justify-center transition-transform duration-200 origin-top">
+                <div id="pages-container" class="flex flex-col items-center">
+                    <!-- 動態生成 A4 頁面 -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let questionsList = [];
+        let showAnswer = false;
+        let currentZoom = 100;
+
+        // 預設混合模式題型清單
+        let mixConfigs = [
+            { d1: 2, d2: 1, count: 4 },
+            { d1: 3, d2: 2, count: 4 }
+        ];
+
+        function adjustZoom(delta) {
+            currentZoom = Math.max(50, Math.min(150, currentZoom + delta));
+            applyZoom();
+        }
+
+        function resetZoom() {
+            currentZoom = 100;
+            applyZoom();
+        }
+
+        function applyZoom() {
+            const wrapper = document.getElementById('worksheet-zoom-wrapper');
+            const zoomText = document.getElementById('zoom-value');
+            if (wrapper) wrapper.style.transform = `scale(${currentZoom / 100})`;
+            if (zoomText) zoomText.innerText = `${currentZoom}%`;
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderMixRowsUI();
+            generateQuestions();
+        });
+
+        // 切換混合模式 UI 顯示
+        function toggleMixModeUI() {
+            const isMix = document.getElementById('toggle-mix-mode').checked;
+            const mixContainer = document.getElementById('mix-mode-container');
+            const stdContainer = document.getElementById('standard-mode-container');
+
+            if (isMix) {
+                mixContainer.classList.remove('hidden');
+                stdContainer.classList.add('hidden');
+            } else {
+                mixContainer.classList.add('hidden');
+                stdContainer.classList.remove('hidden');
+            }
+            generateQuestions();
+        }
+
+        // 渲染混合設定清單 UI
+        function renderMixRowsUI() {
+            const container = document.getElementById('mix-rows-list');
+            container.innerHTML = '';
+            let total = 0;
+
+            mixConfigs.forEach((cfg, idx) => {
+                total += cfg.count;
+                const row = document.createElement('div');
+                row.className = 'bg-white p-2.5 rounded-lg border border-slate-200 text-xs space-y-2 shadow-sm';
+                row.innerHTML = `
+                    <div class="flex justify-between items-center text-slate-600 font-bold">
+                        <span>項次 ${idx + 1}</span>
+                        ${mixConfigs.length > 1 ? `<button onclick="removeMixConfigRow(${idx})" class="text-red-500 hover:text-red-700 flex items-center gap-1"><i class="fa-solid fa-trash-can"></i> 刪除</button>` : ''}
+                    </div>
+                    <div class="grid grid-cols-3 gap-1.5 items-center">
+                        <div>
+                            <span class="text-slate-500 block text-[10px]">前方位數</span>
+                            <select onchange="updateMixConfig(${idx}, 'd1', this.value)" class="w-full border rounded p-1 font-medium bg-slate-50">
+                                <option value="1" ${cfg.d1 == 1 ? 'selected' : ''}>1位數</option>
+                                <option value="2" ${cfg.d1 == 2 ? 'selected' : ''}>2位數</option>
+                                <option value="3" ${cfg.d1 == 3 ? 'selected' : ''}>3位數</option>
+                                <option value="4" ${cfg.d1 == 4 ? 'selected' : ''}>4位數</option>
+                            </select>
+                        </div>
+                        <div>
+                            <span class="text-slate-500 block text-[10px]">後方位數</span>
+                            <select onchange="updateMixConfig(${idx}, 'd2', this.value)" class="w-full border rounded p-1 font-medium bg-slate-50">
+                                <option value="1" ${cfg.d2 == 1 ? 'selected' : ''}>1位數</option>
+                                <option value="2" ${cfg.d2 == 2 ? 'selected' : ''}>2位數</option>
+                                <option value="3" ${cfg.d2 == 3 ? 'selected' : ''}>3位數</option>
+                                <option value="4" ${cfg.d2 == 4 ? 'selected' : ''}>4位數</option>
+                            </select>
+                        </div>
+                        <div>
+                            <span class="text-slate-500 block text-[10px]">數量(題)</span>
+                            <input type="number" min="1" max="30" value="${cfg.count}" onchange="updateMixConfig(${idx}, 'count', this.value)" class="w-full border rounded p-1 font-medium bg-slate-50">
+                        </div>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+
+            document.getElementById('mix-total-count').innerText = total;
+        }
+
+        function addMixConfigRow() {
+            mixConfigs.push({ d1: 2, d2: 1, count: 2 });
+            renderMixRowsUI();
+            generateQuestions();
+        }
+
+        function removeMixConfigRow(index) {
+            if (mixConfigs.length > 1) {
+                mixConfigs.splice(index, 1);
+                renderMixRowsUI();
+                generateQuestions();
+            }
+        }
+
+        function updateMixConfig(index, key, val) {
+            mixConfigs[index][key] = parseInt(val, 10) || 1;
+            renderMixRowsUI();
+            generateQuestions();
+        }
+
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function generateNumberByDigits(digits) {
+            digits = parseInt(digits, 10);
+            if (digits === 1) return getRandomInt(2, 9);
+            const min = Math.pow(10, digits - 1);
+            const max = Math.pow(10, digits) - 1;
+            return getRandomInt(min, max);
+        }
+
+        function createSingleQuestionData(id, specD1, specD2) {
+            const d1 = specD1 || document.getElementById('digits-1').value;
+            const d2 = specD2 || document.getElementById('digits-2').value;
+            const opType = document.getElementById('op-type').value;
+
+            const operators = ['+', '-', '×', '÷'];
+            let currentOp = opType;
+            if (opType === 'multiplication') currentOp = '×';
+            else if (opType === 'addition') currentOp = '+';
+            else if (opType === 'subtraction') currentOp = '-';
+            else if (opType === 'division') currentOp = '÷';
+            else if (opType === 'mixed') {
+                currentOp = operators[getRandomInt(0, 3)];
+            }
+
+            let num1 = generateNumberByDigits(d1);
+            let num2 = generateNumberByDigits(d2);
+            let ans = 0;
+
+            if (currentOp === '+') {
+                ans = num1 + num2;
+            } else if (currentOp === '-') {
+                if (num1 < num2) [num1, num2] = [num2, num1];
+                ans = num1 - num2;
+            } else if (currentOp === '×') {
+                ans = num1 * num2;
+            } else if (currentOp === '÷') {
+                ans = num1;
+                num1 = ans * num2;
+            }
+
+            return { id, num1, num2, op: currentOp, ans, d1, d2 };
+        }
+
+        function generateQuestions() {
+            const isMix = document.getElementById('toggle-mix-mode').checked;
+            questionsList = [];
+
+            if (isMix) {
+                let id = 1;
+                mixConfigs.forEach(cfg => {
+                    for (let i = 0; i < cfg.count; i++) {
+                        questionsList.push(createSingleQuestionData(id++, cfg.d1, cfg.d2));
+                    }
+                });
+            } else {
+                const count = parseInt(document.getElementById('input-total-count').value, 10) || 10;
+                for (let i = 0; i < count; i++) {
+                    questionsList.push(createSingleQuestionData(i + 1));
+                }
+            }
+            renderAll();
+        }
+
+        function regenerateSingleQuestion(index) {
+            const currentQ = questionsList[index];
+            questionsList[index] = createSingleQuestionData(index + 1, currentQ.d1, currentQ.d2);
+            renderAll();
+        }
+
+        function toggleAnswerPage() {
+            showAnswer = !showAnswer;
+            const btnText = document.getElementById('ans-btn-text');
+            btnText.innerText = showAnswer ? "隱藏簡答頁" : "顯示簡答頁";
+            renderAll();
+        }
+
+        function updateQuestionText(index, newText) {
+            try {
+                const clean = newText.replace(/\(\vert{}\)|（|）|=|＝/g, '').trim();
+                let op = '×';
+                if (clean.includes('+')) op = '+';
+                else if (clean.includes('-')) op = '-';
+                else if (clean.includes('÷')) op = '÷';
+                else if (clean.includes('*')) op = '×';
+
+                const parts = clean.split(op);
+                if (parts.length === 2) {
+                    const n1 = parseInt(parts[0], 10);
+                    const n2 = parseInt(parts[1], 10);
+                    if (!isNaN(n1) && !isNaN(n2)) {
+                        questionsList[index].num1 = n1;
+                        questionsList[index].num2 = n2;
+                        questionsList[index].op = op;
+                        if (op === '+') questionsList[index].ans = n1 + n2;
+                        if (op === '-') questionsList[index].ans = n1 - n2;
+                        if (op === '×') questionsList[index].ans = n1 * n2;
+                        if (op === '÷') questionsList[index].ans = (n1 / n2).toFixed(1).replace('.0', '');
+                        if (showAnswer) renderAll();
+                    }
+                }
+            } catch (e) {
+                console.log("手動修改題目解析失敗");
+            }
+        }
+
+        function renderAll() {
+            const container = document.getElementById('pages-container');
+            container.innerHTML = '';
+
+            const showLines = document.getElementById('toggle-calc-lines').checked;
+            const titleText = document.getElementById('input-title').value || "數學練習卷";
+            const itemsPerPage = parseInt(document.getElementById('input-per-page').value, 10) || 10;
+
+            const totalPages = Math.ceil(questionsList.length / itemsPerPage) || 1;
+
+            for (let p = 0; p < totalPages; p++) {
+                const pageQuestions = questionsList.slice(p * itemsPerPage, (p + 1) * itemsPerPage);
+                const pageEl = document.createElement('div');
+                pageEl.className = 'a4-page text-slate-900';
+
+                // 計算當前頁面左欄應該放多少題（半數，無條件進位）
+                const rowCount = Math.ceil(itemsPerPage / 2);
+
+                let pageHTML = `
+                    <div class="page-content-wrapper">
+                        <!-- Word 頁首結構 -->
+                        <div class="word-header pb-1 mb-2">
+                            <div class="grid grid-cols-12 items-start gap-2">
+                                <div class="col-span-7 space-y-2">
+                                    <div class="text-sm font-medium">☐課堂練習 ☐回家練習</div>
+                                    <div class="flex items-baseline gap-4">
+                                        <h1 class="text-xl font-bold tracking-wide">${titleText}</h1>
+                                        <div class="text-sm font-medium">姓名：___________</div>
+                                    </div>
+                                </div>
+
+                                <div class="col-span-5 text-xs font-medium space-y-1 pl-4 border-l border-transparent">
+                                    <div class="flex items-center"><span class="w-12">日期：</span><span>____月____日</span></div>
+                                    <div class="flex items-center"><span class="w-12">表現：</span><span>☐獨立完成 ☐需要引導 ☐_______</span></div>
+                                    <div class="flex items-center"><span class="w-12">評量：</span><span>☐通過 ☐再練習</span></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Word 雙實線 -->
+                        <div class="word-double-line mb-2"></div>
+
+                        <!-- 雙欄題目區：自動均分垂直空間 -->
+                        <div class="two-column-grid">
+                `;
+
+                // 直向順序：先左欄 (0 ~ rowCount-1) 再右欄 (rowCount ~ itemsPerPage-1)
+                for (let r = 0; r < rowCount; r++) {
+                    const leftIdxInPage = r;
+                    const rightIdxInPage = r + rowCount;
+
+                    const q1 = pageQuestions[leftIdxInPage];
+                    const q2 = pageQuestions[rightIdxInPage];
+
+                    const gIdx1 = p * itemsPerPage + leftIdxInPage;
+                    const gIdx2 = p * itemsPerPage + rightIdxInPage;
+
+                    pageHTML += `<div class="grid-row">`;
+
+                    // 左欄題目
+                    if (q1) {
+                        pageHTML += `
+                            <div class="problem-item">
+                                <div class="question-text flex items-center justify-between group rounded hover:bg-amber-50 p-0.5 transition">
+                                    <div class="flex items-center gap-1">
+                                        <span>${q1.id}.</span>
+                                        <span contenteditable="true" 
+                                              onblur="updateQuestionText(${gIdx1}, this.innerText)"
+                                              title="點擊即可手動修改題目"
+                                              class="hover:underline cursor-text focus:outline-none focus:bg-white px-1 rounded">
+                                            ${q1.num1}${q1.op}${q1.num2}＝(    )
+                                        </span>
+                                    </div>
+                                    <button onclick="regenerateSingleQuestion(${gIdx1})" 
+                                            title="重出這題" 
+                                            class="no-print opacity-0 group-hover:opacity-100 text-xs bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold px-1.5 py-0.5 rounded transition">
+                                        <i class="fa-solid fa-dice"></i>
+                                    </button>
+                                </div>
+                                <div class="calc-space ${showLines ? 'calc-space-lines' : ''}"></div>
+                            </div>
+                        `;
+                    } else {
+                        pageHTML += `<div></div>`;
+                    }
+
+                    // 右欄題目
+                    if (q2) {
+                        pageHTML += `
+                            <div class="problem-item">
+                                <div class="question-text flex items-center justify-between group rounded hover:bg-amber-50 p-0.5 transition">
+                                    <div class="flex items-center gap-1">
+                                        <span>${q2.id}.</span>
+                                        <span contenteditable="true" 
+                                              onblur="updateQuestionText(${gIdx2}, this.innerText)"
+                                              title="點擊即可手動修改題目"
+                                              class="hover:underline cursor-text focus:outline-none focus:bg-white px-1 rounded">
+                                            ${q2.num1}${q2.op}${q2.num2}＝(    )
+                                        </span>
+                                    </div>
+                                    <button onclick="regenerateSingleQuestion(${gIdx2})" 
+                                            title="重出這題" 
+                                            class="no-print opacity-0 group-hover:opacity-100 text-xs bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold px-1.5 py-0.5 rounded transition">
+                                        <i class="fa-solid fa-dice"></i>
+                                    </button>
+                                </div>
+                                <div class="calc-space ${showLines ? 'calc-space-lines' : ''}"></div>
+                            </div>
+                        `;
+                    } else {
+                        pageHTML += `<div></div>`;
+                    }
+
+                    pageHTML += `</div>`;
+                }
+
+                pageHTML += `
+                        </div>
+                    </div>
+
+                    <!-- 頁碼 -->
+                    <div class="text-right text-xs text-slate-500 pt-1 border-t border-slate-200">
+                        頁次：${p + 1} / ${totalPages}
+                    </div>
+                `;
+
+                pageEl.innerHTML = pageHTML;
+                container.appendChild(pageEl);
+            }
+
+            if (showAnswer) {
+                renderAnswerSheet();
+            }
+
+            applyZoom();
+        }
+
+        function renderAnswerSheet() {
+            const container = document.getElementById('pages-container');
+            const itemsPerPage = 24;
+            const totalAnsPages = Math.ceil(questionsList.length / itemsPerPage) || 1;
+            const titleText = document.getElementById('input-title').value || "數學練習卷";
+
+            for (let p = 0; p < totalAnsPages; p++) {
+                const pageQuestions = questionsList.slice(p * itemsPerPage, (p + 1) * itemsPerPage);
+                const pageEl = document.createElement('div');
+                pageEl.className = 'a4-page text-slate-900';
+
+                let html = `
+                    <div class="page-content-wrapper">
+                        <div class="border-b-2 border-slate-800 pb-2 mb-4">
+                            <h1 class="text-xl font-bold">${titleText} - 簡答對照頁</h1>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-x-8 gap-y-3">
+                `;
+
+                pageQuestions.forEach(q => {
+                    html += `
+                        <div class="question-text flex justify-between items-center border-b border-slate-200 pb-1">
+                            <span>${q.id}. ${q.num1} ${q.op} ${q.num2} =</span>
+                            <span class="font-bold text-red-600 underline">${q.ans}</span>
+                        </div>
+                    `;
+                });
+
+                html += `
+                        </div>
+                    </div>
+
+                    <div class="text-right text-xs text-slate-500 pt-1 border-t border-slate-200">
+                        簡答頁 ${p + 1} / ${totalAnsPages}
+                    </div>
+                `;
+
+                pageEl.innerHTML = html;
+                container.appendChild(pageEl);
+            }
+        }
+    </script>
+</body>
+</html>
