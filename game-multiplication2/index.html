@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>乘法蓋房子大挑戰 - 單人/雙人遊戲</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @font-face {
+            font-family: 'DFKai-SB';
+            src: local('DFKai-SB'), local('BiauKai'), local('標楷體');
+        }
+
+        * {
+            font-family: 'DFKai-SB', '標楷體', 'BiauKai', serif !important;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 50%, #fce7f3 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 注音符號直書排版 */
+        .word-wrap {
+            display: inline-flex;
+            align-items: center;
+            margin: 0 2px;
+            vertical-align: middle;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .char {
+            font-weight: bold;
+            color: inherit;
+        }
+
+        .bopomofo {
+            position: relative;
+            display: inline-flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.42em;
+            line-height: 1.05;
+            margin-left: 2px;
+            padding-right: 8px;
+            color: inherit;
+            opacity: 0.88;
+            font-weight: normal;
+        }
+
+        .tone-right {
+            position: absolute;
+            right: -1px;
+            top: 50%;
+            transform: translateY(-55%);
+            font-size: 0.95em;
+            font-weight: bold;
+        }
+
+        .title-style .char {
+            font-size: clamp(26px, 3.8vw, 48px);
+            color: #0c4a6e;
+            text-shadow: 2px 2px 0px rgba(255,255,255,0.9);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(16px);
+            border: 4px solid rgba(255, 255, 255, 0.95);
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+        }
+
+        .btn-bubbly {
+            transition: all 0.12s ease-out;
+            box-shadow: 0 6px 0 rgba(0, 0, 0, 0.15);
+        }
+        .btn-bubbly:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 rgba(0, 0, 0, 0.15);
+        }
+
+        /* 答題動畫 */
+        .btn-correct {
+            background-color: #22c55e !important;
+            box-shadow: 0 6px 0 #15803d !important;
+            color: white !important;
+            animation: pulse 0.25s ease-in-out;
+        }
+
+        .btn-wrong {
+            background-color: #ef4444 !important;
+            box-shadow: 0 6px 0 #b91c1c !important;
+            color: white !important;
+            animation: shake 0.3s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-6px); }
+            40% { transform: translateX(6px); }
+            60% { transform: translateX(-3px); }
+            80% { transform: translateX(3px); }
+        }
+
+        /* 房子建築物樣式與動畫 */
+        .house-container {
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center;
+            justify-content: flex-start;
+            height: 220px;
+            width: 100%;
+            overflow-y: auto;
+            border-bottom: 6px solid #84cc16;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 12px;
+            padding: 8px 0;
+            position: relative;
+        }
+
+        .house-block {
+            width: 110px;
+            height: 38px;
+            margin-bottom: 2px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            box-shadow: inset 0 -3px 0 rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.1);
+            animation: buildUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .house-block-roof {
+            width: 0;
+            height: 0;
+            border-left: 65px solid transparent;
+            border-right: 65px solid transparent;
+            border-bottom: 35px solid #ea580c;
+            margin-bottom: 2px;
+            animation: buildUp 0.3s ease-out;
+            flex-shrink: 0;
+        }
+
+        @keyframes buildUp {
+            from { transform: translateY(-20px) scale(0.8); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        /* 槌子敲碎動畫 */
+        .hammer-icon {
+            position: absolute;
+            font-size: 50px;
+            z-index: 30;
+            pointer-events: none;
+            opacity: 0;
+            transform-origin: bottom right;
+        }
+
+        .hammer-hit {
+            animation: hammerSmash 0.5s ease-in-out forwards;
+        }
+
+        @keyframes hammerSmash {
+            0% { opacity: 0; transform: translate(30px, -40px) rotate(45deg); }
+            40% { opacity: 1; transform: translate(0px, 0px) rotate(-30deg); }
+            70% { opacity: 1; transform: translate(-5px, 5px) rotate(-10deg); }
+            100% { opacity: 0; transform: translate(-10px, 10px) rotate(0deg); }
+        }
+
+        .block-destroy {
+            animation: destroyBlock 0.4s ease-in forwards !important;
+        }
+
+        @keyframes destroyBlock {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2) rotate(10deg); background-color: #ef4444; }
+            100% { transform: scale(0) rotate(-20deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="p-2 sm:p-4">
+
+<!-- 1. 設定與模式選擇畫面 -->
+<div id="setup-screen" class="w-full max-w-2xl glass-card rounded-3xl p-6 sm:p-8 text-center my-auto">
+    <div id="main-title" class="title-style mb-6 flex flex-wrap justify-center items-center gap-1"></div>
+
+    <div class="flex justify-center gap-3 sm:gap-6 mb-8">
+        <button id="mode-single-btn" onclick="selectMode('single')" class="btn-bubbly px-5 py-3 rounded-2xl text-xl sm:text-2xl font-bold border-4 border-sky-400 bg-sky-100 text-sky-800">
+            <span class="bpmf-text">單[ㄉㄢ]人[ㄖㄣˊ]蓋[ㄍㄞˋ]房[ㄈㄤˊ]子[ㄗ˙]</span>
+        </button>
+        <button id="mode-pvp-btn" onclick="selectMode('pvp')" class="btn-bubbly px-5 py-3 rounded-2xl text-xl sm:text-2xl font-bold border-4 border-amber-300 bg-amber-50 text-amber-800 opacity-60">
+            <span class="bpmf-text">雙[ㄕㄨㄤ]人[ㄖㄣˊ]對[ㄉㄨㄟˋ]建[ㄐㄧㄢˋ]</span>
+        </button>
+    </div>
+
+    <div id="input-section" class="bg-white/80 p-5 rounded-2xl border-2 border-sky-200 mb-8 max-w-md mx-auto shadow-inner">
+        <div id="p1-only-box" class="space-y-2">
+            <label class="block text-2xl font-bold text-sky-900 mb-2">
+                <span class="bpmf-text">請[ㄑㄧㄥˇ]輸[ㄕㄨ]入[ㄖㄨˋ]名[ㄇㄧㄥˊ]字[ㄗˋ]：</span>
+            </label>
+            <input type="text" id="p1-name-single" value="小小建築師" maxlength="6" 
+                   class="w-full text-center text-2xl p-3 border-4 border-sky-300 rounded-xl focus:outline-none focus:border-sky-500 bg-sky-50/50">
+        </div>
+
+        <div id="pvp-box" class="hidden grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-lg font-bold text-rose-800 mb-1">
+                    <span class="bpmf-text">左[ㄗㄨㄛˇ]邊[ㄅㄧㄢ]玩[ㄨㄢˊ]家[ㄐㄧㄚ]：</span>
+                </label>
+                <input type="text" id="p1-name-pvp" value="建築師 1" maxlength="6" 
+                       class="w-full text-center text-xl p-2.5 border-4 border-rose-300 rounded-xl focus:outline-none focus:border-rose-500 bg-rose-50/50">
+            </div>
+            <div>
+                <label class="block text-lg font-bold text-teal-800 mb-1">
+                    <span class="bpmf-text">右[ㄧㄡˋ]邊[ㄅㄧㄢ]玩[ㄨㄢˊ]家[ㄐㄧㄚ]：</span>
+                </label>
+                <input type="text" id="p2-name-pvp" value="建築師 2" maxlength="6" 
+                       class="w-full text-center text-xl p-2.5 border-4 border-teal-300 rounded-xl focus:outline-none focus:border-teal-500 bg-teal-50/50">
+            </div>
+        </div>
+    </div>
+
+    <button onclick="startGame()" class="btn-bubbly bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-2xl sm:text-3xl px-10 py-4 rounded-full border-b-4 border-emerald-700">
+        <span class="bpmf-text">開[ㄎㄞ]始[ㄕˇ]蓋[ㄍㄞˋ]房[ㄈㄤˊ]子[ㄗ˙]！</span>
+    </button>
+</div>
+
+<!-- 2. 單人挑戰模式畫面 -->
+<div id="single-game-screen" class="hidden w-full max-w-2xl glass-card rounded-3xl p-6 text-center my-auto relative">
+    <div id="single-hammer" class="hammer-icon">🔨</div>
+
+    <div class="flex justify-between items-center bg-white/90 p-4 rounded-2xl border-2 border-sky-200 mb-4 text-xl sm:text-2xl font-bold">
+        <div class="text-amber-600 flex items-center gap-1">
+            <span class="bpmf-text">時[ㄕˊ]間[ㄐㄧㄢ]：</span>
+            <span id="single-timer" class="text-3xl sm:text-4xl text-amber-600">60</span>
+            <span class="bpmf-text">秒[ㄇㄧㄠˇ]</span>
+        </div>
+        <div class="text-emerald-600 flex items-center gap-1">
+            <span class="bpmf-text">房[ㄈㄤˊ]子[ㄗ˙]：</span>
+            <span id="single-height" class="text-3xl sm:text-4xl">0</span>
+            <span class="bpmf-text">層[ㄘㄥˊ]</span>
+        </div>
+    </div>
+
+    <!-- 蓋房子顯示區 -->
+    <div class="mb-4">
+        <div class="text-sm font-bold text-gray-500 mb-1"><span class="bpmf-text">蓋[ㄍㄞˋ]房[ㄈㄤˊ]子[ㄗ˙]基[ㄐㄧ]地[ㄉㄧˋ]</span></div>
+        <div id="single-house" class="house-container"></div>
+    </div>
+
+    <div class="my-4 py-4 bg-sky-50/80 rounded-3xl border-4 border-sky-200 shadow-inner">
+        <div id="single-player-tag" class="text-lg text-sky-800 font-bold mb-1"></div>
+        <div id="single-question" class="text-5xl sm:text-7xl font-extrabold text-sky-950 tracking-wider">35 × 8 = ?</div>
+    </div>
+
+    <div class="grid grid-cols-3 gap-3 sm:gap-4 mt-4">
+        <button class="single-opt btn-bubbly bg-sky-400 text-white text-3xl sm:text-5xl font-bold py-4 rounded-2xl border-b-6 border-sky-600" onclick="checkSingleAnswer(0)"></button>
+        <button class="single-opt btn-bubbly bg-sky-400 text-white text-3xl sm:text-5xl font-bold py-4 rounded-2xl border-b-6 border-sky-600" onclick="checkSingleAnswer(1)"></button>
+        <button class="single-opt btn-bubbly bg-sky-400 text-white text-3xl sm:text-5xl font-bold py-4 rounded-2xl border-b-6 border-sky-600" onclick="checkSingleAnswer(2)"></button>
+    </div>
+</div>
+
+<!-- 3. 雙人對戰模式畫面 -->
+<div id="pvp-game-screen" class="hidden w-full max-w-6xl flex flex-col justify-between gap-2 p-2 my-auto">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 relative">
+        
+        <!-- 左側：玩家 1 -->
+        <div class="glass-card rounded-3xl p-4 flex flex-col justify-between border-4 border-rose-300 bg-rose-50/50 relative">
+            <div id="p1-hammer" class="hammer-icon">🔨</div>
+            <div class="flex justify-between items-center bg-white/90 px-4 py-2 rounded-xl text-lg font-bold text-rose-900 border border-rose-200 shadow-sm">
+                <span id="p1-display-name" class="text-rose-600 font-extrabold text-xl"></span>
+                <div><span class="bpmf-text">房[ㄈㄤˊ]子[ㄗ˙]：</span><span id="p1-height" class="text-2xl text-rose-600 font-extrabold">0</span> <span class="bpmf-text">層[ㄘㄥˊ]</span></div>
+            </div>
+
+            <div class="my-2">
+                <div id="p1-house" class="house-container"></div>
+            </div>
+
+            <div class="my-2 text-center py-4 bg-white/60 rounded-2xl border-2 border-rose-200">
+                <div id="p1-question" class="text-4xl sm:text-6xl font-black text-rose-950 tracking-wider"></div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2">
+                <button class="p1-opt btn-bubbly bg-rose-400 text-white text-2xl sm:text-4xl font-bold py-3 sm:py-5 rounded-2xl border-b-4 border-rose-600" onclick="checkPvpAnswer(1, 0)"></button>
+                <button class="p1-opt btn-bubbly bg-rose-400 text-white text-2xl sm:text-4xl font-bold py-3 sm:py-5 rounded-2xl border-b-4 border-rose-600" onclick="checkPvpAnswer(1, 1)"></button>
+                <button class="p1-opt btn-bubbly bg-rose-400 text-white text-2xl sm:text-4xl font-bold py-3 sm:py-5 rounded-2xl border-b-4 border-rose-600" onclick="checkPvpAnswer(1, 2)"></button>
+            </div>
+        </div>
+
+        <!-- 中央計時 -->
+        <div class="hidden md:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex-col items-center">
+            <div class="bg-amber-400 text-amber-950 font-black text-xl px-4 py-2 rounded-full border-4 border-white shadow-xl flex flex-col items-center">
+                <span class="text-xs bpmf-text font-normal text-amber-900">倒[ㄉㄠˋ]數[ㄕㄨˋ]</span>
+                <span id="pvp-timer-desktop" class="text-2xl text-red-700 font-extrabold">60</span>
+            </div>
+        </div>
+
+        <!-- 右側：玩家 2 -->
+        <div class="glass-card rounded-3xl p-4 flex flex-col justify-between border-4 border-teal-300 bg-teal-50/50 relative">
+            <div id="p2-hammer" class="hammer-icon">🔨</div>
+            <div class="flex justify-between items-center bg-white/90 px-4 py-2 rounded-xl text-lg font-bold text-teal-900 border border-teal-200 shadow-sm">
+                <span id="p2-display-name" class="text-teal-600 font-extrabold text-xl"></span>
+                <div><span class="bpmf-text">房[ㄈㄤˊ]子[ㄗ˙]：</span><span id="p2-height" class="text-2xl text-teal-600 font-extrabold">0</span> <span class="bpmf-text">層[ㄘㄥˊ]</span></div>
+            </div>
+
+            <div class="my-2">
+                <div id="p2-house" class="house-container"></div>
+            </div>
+
+            <div class="my-2 text-center py-4 bg-white/60 rounded-2xl border-2 border-teal-200">
+                <div id="p2-question" class="text-4xl sm:text-6xl font-black text-teal-950 tracking-wider"></div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2">
+                <button class="p2-opt btn-bubbly bg-teal-500 text-white text-2xl sm:text-4xl font-bold py-3 sm:py-5 rounded-2xl border-b-4 border-teal-700" onclick="checkPvpAnswer(2, 0)"></button>
+                <button class="p2-opt btn-bubbly bg-teal-500 text-white text-2xl sm:text-4xl font-bold py-3 sm:py-5 rounded-2xl border-b-4 border-teal-700" onclick="checkPvpAnswer(2, 1)"></button>
+                <button class="p2-opt btn-bubbly bg-teal-500 text-white text-2xl sm:text-4xl font-bold py-3 sm:py-5 rounded-2xl border-b-4 border-teal-700" onclick="checkPvpAnswer(2, 2)"></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="md:hidden bg-amber-400 text-amber-950 rounded-full py-1 px-4 text-center font-bold text-lg border-2 border-white flex justify-center items-center gap-2">
+        <span class="bpmf-text">剩[ㄕㄥˋ]餘[ㄩˊ]時[ㄕˊ]間[ㄐㄧㄢ]：</span>
+        <span id="pvp-timer-mobile" class="text-xl text-red-700 font-black">60</span>
+        <span class="bpmf-text">秒[ㄇㄧㄠˇ]</span>
+    </div>
+</div>
+
+<!-- 4. 遊戲結束結算畫面 -->
+<div id="result-screen" class="hidden w-full max-w-3xl glass-card rounded-3xl p-6 sm:p-8 text-center my-auto">
+    <div id="result-title" class="title-style mb-4 flex justify-center"></div>
+    <div id="winner-announcement" class="hidden my-4 p-4 rounded-2xl bg-gradient-to-r from-amber-100 via-amber-200 to-amber-100 border-4 border-amber-300 text-amber-900 font-extrabold text-2xl sm:text-3xl shadow-md"></div>
+    <div id="result-stats-box" class="bg-white/90 p-5 rounded-2xl border-2 border-sky-200 my-6 text-left space-y-4 max-w-2xl mx-auto text-lg sm:text-2xl"></div>
+
+    <button onclick="resetToHome()" class="btn-bubbly bg-sky-500 hover:bg-sky-600 text-white font-bold text-2xl sm:text-3xl px-10 py-4 rounded-full border-b-4 border-sky-700 mt-2">
+        <span class="bpmf-text">回[ㄏㄨㄟˊ]首[ㄕㄡˇ]頁[ㄧㄝˋ] / 再[ㄗㄞˋ]玩[ㄨㄢˊ]一[ㄧ]次[ㄘˋ]</span>
+    </button>
+</div>
+
+<script>
+    const COLORS = ['bg-amber-400', 'bg-sky-400', 'bg-emerald-400', 'bg-indigo-400', 'bg-rose-400', 'bg-purple-400', 'bg-orange-400'];
+
+    function parseBpmf(text) {
+        return text.replace(/([^\u0000-\u007F]+)(?:\[([^\]]+)\])/g, (match, char, bpmf) => {
+            let tone = '';
+            let mainSymbols = bpmf;
+            if (['ˊ','ˇ','ˋ','˙'].some(t => bpmf.includes(t))) {
+                tone = bpmf.slice(-1);
+                mainSymbols = bpmf.slice(0, -1);
+            }
+            let symHtml = mainSymbols.split('').join('<br>');
+            let toneHtml = tone ? `<span class="tone-right">${tone}</span>` : '';
+            return `<span class="word-wrap"><span class="char">${char}</span><span class="bopomofo">${symHtml}${toneHtml}</span></span>`;
+        });
+    }
+
+    function renderAllBpmfText() {
+        document.querySelectorAll('.bpmf-text').forEach(el => {
+            if (!el.dataset.raw) el.dataset.raw = el.innerText;
+            el.innerHTML = parseBpmf(el.dataset.raw);
+        });
+    }
+
+    let currentMode = 'single';
+    let timerId = null;
+    let timeLeft = 60;
+
+    let singleState = { name: '小小建築師', height: 0, wrong: 0, ans: 0, hasErrored: false };
+    let pvpState = {
+        p1: { name: '建築師 1', height: 0, wrong: 0, ans: 0, errored: false },
+        p2: { name: '建築師 2', height: 0, wrong: 0, ans: 0, errored: false }
+    };
+
+    function selectMode(mode) {
+        currentMode = mode;
+        const btnSingle = document.getElementById('mode-single-btn');
+        const btnPvp = document.getElementById('mode-pvp-btn');
+        const p1OnlyBox = document.getElementById('p1-only-box');
+        const pvpBox = document.getElementById('pvp-box');
+
+        if (mode === 'single') {
+            btnSingle.classList.remove('opacity-60');
+            btnSingle.classList.add('bg-sky-100', 'border-sky-400');
+            btnPvp.classList.add('opacity-60');
+            p1OnlyBox.classList.remove('hidden');
+            pvpBox.classList.add('hidden');
+        } else {
+            btnPvp.classList.remove('opacity-60');
+            btnPvp.classList.add('bg-amber-100', 'border-amber-400');
+            btnSingle.classList.add('opacity-60');
+            p1OnlyBox.classList.add('hidden');
+            pvpBox.classList.remove('hidden');
+        }
+    }
+
+    // 生成【兩位數 乘以 一位數】問題
+    function generateQuestion() {
+        const num2Digit = Math.floor(Math.random() * 90) + 10; // 10 ~ 99
+        const num1Digit = Math.floor(Math.random() * 8) + 2;   // 2 ~ 9
+        const ans = num2Digit * num1Digit;
+
+        let opts = [ans];
+        while (opts.length < 3) {
+            let offset = (Math.floor(Math.random() * 5) + 1) * (Math.random() < 0.5 ? 10 : 1);
+            let fake = Math.random() < 0.5 ? ans + offset : ans - offset;
+            if (fake > 0 && !opts.includes(fake)) opts.push(fake);
+        }
+        opts.sort(() => Math.random() - 0.5);
+
+        return { qText: `${num2Digit} × ${num1Digit} = ?`, ans, opts };
+    }
+
+    function startGame() {
+        document.getElementById('setup-screen').classList.add('hidden');
+        timeLeft = 60;
+
+        if (currentMode === 'single') {
+            singleState.name = document.getElementById('p1-name-single').value.trim() || '小小建築師';
+            singleState.height = 0; singleState.wrong = 0;
+
+            document.getElementById('single-height').innerText = '0';
+            document.getElementById('single-timer').innerText = '60';
+            document.getElementById('single-player-tag').innerHTML = parseBpmf(`建[ㄐㄧㄢˋ]築[ㄓㄨˊ]師[ㄕ]：${singleState.name}`);
+            document.getElementById('single-house').innerHTML = '';
+
+            document.getElementById('single-game-screen').classList.remove('hidden');
+            nextSingleQuestion();
+
+            timerId = setInterval(() => {
+                timeLeft--;
+                document.getElementById('single-timer').innerText = timeLeft;
+                if (timeLeft <= 0) endSingleGame();
+            }, 1000);
+
+        } else {
+            pvpState.p1.name = document.getElementById('p1-name-pvp').value.trim() || '建築師 1';
+            pvpState.p2.name = document.getElementById('p2-name-pvp').value.trim() || '建築師 2';
+            pvpState.p1.height = 0; pvpState.p1.wrong = 0;
+            pvpState.p2.height = 0; pvpState.p2.wrong = 0;
+
+            document.getElementById('p1-display-name').innerText = pvpState.p1.name;
+            document.getElementById('p2-display-name').innerText = pvpState.p2.name;
+            document.getElementById('p1-height').innerText = '0';
+            document.getElementById('p2-height').innerText = '0';
+            document.getElementById('p1-house').innerHTML = '';
+            document.getElementById('p2-house').innerHTML = '';
+
+            updatePvpTimer(60);
+            document.getElementById('pvp-game-screen').classList.remove('hidden');
+
+            nextPvpQuestion(1);
+            nextPvpQuestion(2);
+
+            timerId = setInterval(() => {
+                timeLeft--;
+                updatePvpTimer(timeLeft);
+                if (timeLeft <= 0) endPvpGame();
+            }, 1000);
+        }
+    }
+
+    function updatePvpTimer(time) {
+        document.getElementById('pvp-timer-desktop').innerText = time;
+        document.getElementById('pvp-timer-mobile').innerText = time;
+    }
+
+    // 房子增加/減少 UI 渲染
+    function addBlockToHouse(containerId) {
+        const container = document.getElementById(containerId);
+        const colorClass = COLORS[Math.floor(Math.random() * COLORS.length)];
+        const block = document.createElement('div');
+        block.className = `house-block ${colorClass}`;
+        block.innerText = `🧱 ${container.children.length + 1}F`;
+        container.appendChild(block);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function removeBlockFromHouse(containerId, hammerId) {
+        const container = document.getElementById(containerId);
+        const hammer = document.getElementById(hammerId);
+
+        // 觸發槌子動畫
+        if (hammer) {
+            hammer.classList.remove('hammer-hit');
+            void hammer.offsetWidth; 
+            hammer.classList.add('hammer-hit');
+        }
+
+        if (container.children.length > 0) {
+            const lastBlock = container.lastElementChild;
+            lastBlock.classList.add('block-destroy');
+            setTimeout(() => {
+                if (lastBlock.parentNode === container) {
+                    container.removeChild(lastBlock);
+                }
+            }, 350);
+        }
+    }
+
+    // 單人模式
+    function nextSingleQuestion() {
+        singleState.hasErrored = false;
+        const qData = generateQuestion();
+        singleState.ans = qData.ans;
+
+        document.getElementById('single-question').innerText = qData.qText;
+
+        const btns = document.querySelectorAll('.single-opt');
+        btns.forEach((b, i) => {
+            b.innerText = qData.opts[i];
+            b.className = 'single-opt btn-bubbly bg-sky-400 text-white text-3xl sm:text-5xl font-bold py-4 rounded-2xl border-b-6 border-sky-600';
+            b.disabled = false;
+        });
+    }
+
+    function checkSingleAnswer(idx) {
+        const btns = document.querySelectorAll('.single-opt');
+        const chosen = parseInt(btns[idx].innerText);
+
+        if (chosen === singleState.ans) {
+            if (!singleState.hasErrored) {
+                singleState.height++;
+                document.getElementById('single-height').innerText = singleState.height;
+                addBlockToHouse('single-house');
+            }
+            btns[idx].classList.add('btn-correct');
+            setTimeout(nextSingleQuestion, 220);
+        } else {
+            singleState.wrong++;
+            singleState.hasErrored = true;
+            if (singleState.height > 0) singleState.height--;
+            document.getElementById('single-height').innerText = singleState.height;
+
+            removeBlockFromHouse('single-house', 'single-hammer');
+
+            btns[idx].classList.add('btn-wrong');
+            setTimeout(() => btns[idx].classList.remove('btn-wrong'), 500);
+        }
+    }
+
+    // 雙人對戰模式
+    function nextPvpQuestion(pNum) {
+        const pState = (pNum === 1) ? pvpState.p1 : pvpState.p2;
+        pState.errored = false;
+
+        const qData = generateQuestion();
+        pState.ans = qData.ans;
+
+        document.getElementById(`p${pNum}-question`).innerText = qData.qText;
+
+        const btns = document.querySelectorAll(`.p${pNum}-opt`);
+        const bgStyle = pNum === 1 ? 'bg-rose-400 border-rose-600' : 'bg-teal-500 border-teal-700';
+
+        btns.forEach((b, i) => {
+            b.innerText = qData.opts[i];
+            b.className = `p${pNum}-opt btn-bubbly ${bgStyle} text-white text-2xl sm:text-4xl font-bold py-3 sm:py-5 rounded-2xl border-b-4`;
+            b.disabled = false;
+        });
+    }
+
+    function checkPvpAnswer(pNum, idx) {
+        const pState = (pNum === 1) ? pvpState.p1 : pvpState.p2;
+        const btns = document.querySelectorAll(`.p${pNum}-opt`);
+        const chosen = parseInt(btns[idx].innerText);
+
+        if (chosen === pState.ans) {
+            if (!pState.errored) {
+                pState.height++;
+                document.getElementById(`p${pNum}-height`).innerText = pState.height;
+                addBlockToHouse(`p${pNum}-house`);
+            }
+            btns[idx].classList.add('btn-correct');
+            setTimeout(() => nextPvpQuestion(pNum), 200);
+        } else {
+            pState.wrong++;
+            pState.errored = true;
+            if (pState.height > 0) pState.height--;
+            document.getElementById(`p${pNum}-height`).innerText = pState.height;
+
+            removeBlockFromHouse(`p${pNum}-house`, `p${pNum}-hammer`);
+
+            btns[idx].classList.add('btn-wrong');
+            setTimeout(() => btns[idx].classList.remove('btn-wrong'), 500);
+        }
+    }
+
+    // 結算畫面
+    function endSingleGame() {
+        clearInterval(timerId);
+        document.getElementById('single-game-screen').classList.add('hidden');
+        document.getElementById('result-screen').classList.remove('hidden');
+
+        document.getElementById('result-title').innerHTML = parseBpmf('蓋[ㄍㄞˋ]房[ㄈㄤˊ]子[ㄗ˙]挑[ㄊㄧㄠˇ]戰[ㄓㄢˋ]結[ㄐㄧㄝˊ]束[ㄕㄨˋ]');
+        document.getElementById('winner-announcement').classList.add('hidden');
+
+        document.getElementById('result-stats-box').innerHTML = `
+            <div class="text-sky-800 font-bold border-b pb-2">
+                <span class="bpmf-text">建[ㄐㄧㄢˋ]築[ㄓㄨˊ]師[ㄕ]：</span><span class="text-sky-600">${singleState.name}</span>
+            </div>
+            <div class="flex justify-between items-center text-emerald-700">
+                <span class="bpmf-text">房[ㄈㄤˊ]子[ㄗ˙]總[ㄗㄨㄥˇ]高[ㄍㄠ]度[ㄉㄨˋ]：</span>
+                <span class="font-extrabold text-3xl">🏠 ${singleState.height} <span class="text-base bpmf-text">層[ㄘㄥˊ]</span></span>
+            </div>
+            <div class="flex justify-between items-center text-rose-600">
+                <span class="bpmf-text">答[ㄉㄚˊ]錯[ㄘㄨㄛˋ]（被[ㄅㄟˋ]槌[ㄔㄨㄟˊ]子[ㄗ˙]打[ㄉㄚˇ]掉[ㄉㄧㄠˋ]）：</span>
+                <span class="font-extrabold text-3xl">🔨 ${singleState.wrong} <span class="text-base bpmf-text">次[ㄘˋ]</span></span>
+            </div>
+        `;
+        renderAllBpmfText();
+    }
+
+    function endPvpGame() {
+        clearInterval(timerId);
+        document.getElementById('pvp-game-screen').classList.add('hidden');
+        document.getElementById('result-screen').classList.remove('hidden');
+
+        document.getElementById('result-title').innerHTML = parseBpmf('對[ㄉㄨㄟˋ]建[ㄐㄧㄢˋ]結[ㄐㄧㄝˊ]果[ㄍㄨㄛˊ]');
+        const announceBox = document.getElementById('winner-announcement');
+        announceBox.classList.remove('hidden');
+
+        const p1 = pvpState.p1;
+        const p2 = pvpState.p2;
+
+        if (p1.height > p2.height) {
+            announceBox.innerHTML = parseBpmf(`👑 恭[ㄍㄨㄥ]喜[ㄒㄧ] <span class="text-rose-600">${p1.name}</span> 蓋[ㄍㄞˋ]出[ㄔㄨ]最[ㄗㄨㄟˋ]高[ㄍㄠ]的[ㄉㄜ˙]房[ㄈㄤˊ]子[ㄗ˙]！ 🎉`);
+        } else if (p2.height > p1.height) {
+            announceBox.innerHTML = parseBpmf(`👑 恭[ㄍㄨㄥ]喜[ㄒㄧ] <span class="text-teal-600">${p2.name}</span> 蓋[ㄍㄞˋ]出[ㄔㄨ]最[ㄗㄨㄟˋ]高[ㄍㄠ]的[ㄉㄜ˙]房[ㄈㄤˊ]子[ㄗ˙]！ 🎉`);
+        } else {
+            announceBox.innerHTML = parseBpmf(`🤝 兩[ㄌㄧㄤˇ]位[ㄨㄟˋ]蓋[ㄍㄞˋ]得[ㄉㄜ˙]一[ㄧ]樣[ㄧㄤˋ]高[ㄍㄠ]！平[ㄆㄧㄥˊ]手[ㄕㄡˇ]！`);
+        }
+
+        document.getElementById('result-stats-box').innerHTML = `
+            <div class="grid grid-cols-2 gap-4 text-center">
+                <div class="bg-rose-50 p-4 rounded-2xl border-2 border-rose-200">
+                    <div class="font-bold text-rose-800 text-2xl mb-1">${p1.name}</div>
+                    <div class="text-rose-600 text-xl"><span class="bpmf-text">房[ㄈㄤˊ]子[ㄗ˙]：</span><span class="text-3xl font-black">🏠 ${p1.height} 層</span></div>
+                    <div class="text-gray-500 text-base mt-1"><span class="bpmf-text">槌[ㄔㄨㄟˊ]打[ㄉㄚˇ]：</span>${p1.wrong} <span class="bpmf-text">次[ㄘˋ]</span></div>
+                </div>
+                <div class="bg-teal-50 p-4 rounded-2xl border-2 border-teal-200">
+                    <div class="font-bold text-teal-800 text-2xl mb-1">${p2.name}</div>
+                    <div class="text-teal-600 text-xl"><span class="bpmf-text">房[ㄈㄤˊ]子[ㄗ˙]：</span><span class="text-3xl font-black">🏠 ${p2.height} 層</span></div>
+                    <div class="text-gray-500 text-base mt-1"><span class="bpmf-text">槌[ㄔㄨㄟˊ]打[ㄉㄚˇ]：</span>${p2.wrong} <span class="bpmf-text">次[ㄘˋ]</span></div>
+                </div>
+            </div>
+        `;
+        renderAllBpmfText();
+    }
+
+    function resetToHome() {
+        document.getElementById('result-screen').classList.add('hidden');
+        document.getElementById('setup-screen').classList.remove('hidden');
+    }
+
+    window.onload = function() {
+        document.getElementById('main-title').innerHTML = parseBpmf('乘[ㄔㄥˊ]法[ㄈㄚˇ]蓋[ㄍㄞˋ]房[ㄈㄤˊ]子[ㄗ˙]大[ㄉㄚˋ]挑[ㄊㄧㄠˇ]戰[ㄓㄢˋ]');
+        renderAllBpmfText();
+    };
+</script>
+</body>
+</html>
