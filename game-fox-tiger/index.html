@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#244d3c">
+<title>狐假虎威｜跟讀小劇場</title>
+<link rel="stylesheet" href="style.css">
+<header><div class="bar"><a class="home" href="../">← 遊戲教室</a><nav aria-label="學習活動"><button id="story-tab" aria-pressed="true">課文跟讀</button><button id="quiz-tab" aria-pressed="false">小測驗</button></nav></div></header>
+<main>
+  <div class="intro"><div class="tag">六年級國語　／　第八課</div><h1>狐假虎威</h1><p>跟著聲音讀課文，看看狐狸是怎麼讓老虎相信牠的。</p></div>
+  <section id="story" aria-label="課文跟讀">
+    <div class="steps" id="steps" aria-label="選擇段落"></div>
+    <div class="grid">
+      <article class="player">
+        <div class="picture" id="picture"><img id="illustration" width="508" height="508" alt=""><span id="number"></span></div>
+        <div class="reading">
+          <div class="caption">文言文跟讀</div>
+          <h2 id="scene-title" tabindex="-1"></h2>
+          <div id="original" class="original"></div>
+          <div class="controls"><button id="previous">‹ 上一節</button><button class="primary" id="play">▶ 播放</button><button id="next">下一節 ›</button></div>
+          <div class="extras"><button id="replay">↺ 從頭聽</button><button id="speed" aria-pressed="false">慢速</button><button id="motion" aria-pressed="false">關閉動畫</button></div>
+          <div class="status" role="status" id="status"></div>
+        </div>
+      </article>
+      <aside class="explain" aria-label="白話解釋">
+        <div class="aside-top"><h2>這句話的意思</h2><button id="plain-play" aria-label="播放白話解釋">🔊 聽白話</button></div>
+        <p id="plain"></p>
+        <h3>詞語小幫手</h3><dl id="words"></dl>
+        <p class="clue" id="clue"></p>
+      </aside>
+    </div>
+    <details><summary>故事背景與想一想</summary><p>《戰國策》由西漢劉向編纂，也就是把資料蒐集整理成書。楚宣王想知道北方各國為什麼害怕楚國大將昭奚恤。大臣江乙講了這則寓言，指出各國真正害怕的是楚國強大的武力。</p><p><strong>想一想</strong>　狐狸是為了嚇人，還是為了保命才急中生智？你從故事哪裡看出來？</p></details>
+  </section>
+  <section id="quiz" class="quiz" aria-label="小測驗" hidden>
+    <div class="tag" id="quiz-progress"></div><h2 id="question" tabindex="-1"></h2>
+    <div id="options"></div><p id="feedback" role="status"></p>
+    <div class="quiz-controls"><button id="review" hidden>回去看這一幕</button><button class="primary" id="advance" hidden>下一題 ›</button><button class="primary" id="restart" hidden>再玩一次</button></div>
+  </section>
+</main>
+<footer>課文來源　《戰國策》〈狐假虎威〉</footer>
+<script src="lesson.js"></script><script src="cues.js"></script><script src="app.js"></script>
+</html>
